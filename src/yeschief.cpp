@@ -21,8 +21,8 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
-#include "my_lib.h"
+#include "yeschief.h"
 
-auto my_lib::addition(const int a, const int b) -> int {
+auto yeschief::addition(const int a, const int b) -> int {
     return a + b;
 }

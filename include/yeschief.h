@@ -21,11 +21,11 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
-#ifndef MY_LIB_H
-#define MY_LIB_H
+#ifndef YESCHIEF_H
+#define YESCHIEF_H
 
-namespace my_lib {
+namespace yeschief {
 auto addition(int a, int b) -> int;
-} // namespace my_lib
+} // namespace yeschief
 
-#endif // MY_LIB_H
+#endif // YESCHIEF_H

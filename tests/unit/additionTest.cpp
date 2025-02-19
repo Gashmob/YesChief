@@ -22,8 +22,8 @@
  * SOFTWARE.
  */
 #include <gtest/gtest.h>
-#include <my_lib.h>
+#include <yeschief.h>
 
 TEST(addition, itAddsInt) {
-    ASSERT_EQ(3, my_lib::addition(1, 2));
+    ASSERT_EQ(3, yeschief::addition(1, 2));
 }
