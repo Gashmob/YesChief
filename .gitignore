@@ -1,0 +1,6 @@
+.idea
+.vscode
+out
+result
+node_modules
+coverage.info
