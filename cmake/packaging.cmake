@@ -22,7 +22,7 @@
 include_guard()
 
 function(lib_package)
-    set(CPACK_PACKAGE_NAME "YesChief!")
+    set(CPACK_PACKAGE_NAME "YesChief")
     set(CPACK_PACKAGE_VENDOR "YesChief! developers")
     set(CPACK_PACKAGE_MAINTAINER "${CPACK_PACKAGE_VENDOR}")
     set(CPACK_PACKAGE_CONTACT "Kevin Traini <kevin@ktraini.com>")
