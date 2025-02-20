@@ -1,4 +1,4 @@
-/**
+/*
  * MIT License
  *
  * Copyright (c) 2025-Present Kevin Traini
@@ -21,11 +21,21 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
-#ifndef MY_LIB_H
-#define MY_LIB_H
+#ifndef YESCHIEF_H
+#define YESCHIEF_H
+/**
+ * TODO: File-level description
+ */
 
-namespace my_lib {
+namespace yeschief {
+/**
+ * Performs an addition between the 2 parameters and returns the result
+ *
+ * @param a Left operand
+ * @param b Right operand
+ * @return Result of addition between a and b
+ */
 auto addition(int a, int b) -> int;
-} // namespace my_lib
+} // namespace yeschief
 
-#endif // MY_LIB_H
+#endif // YESCHIEF_H

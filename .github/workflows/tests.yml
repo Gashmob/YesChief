@@ -18,14 +18,14 @@ jobs:
       - name: Run tests
         run: nix-shell --run 'run_unit_tests'
 
-      - name: Build coverage
-        run: nix-shell --run 'build_coverage'
-      - name: Upload coverage report to Codacy
-        if: ${{ github.actor != 'dependabot[bot]' }}
-        uses: codacy/codacy-coverage-reporter-action@89d6c85cfafaec52c72b6c5e8b2878d33104c699 # v1.3.0
-        with:
-          project-token: ${{ secrets.CODACY_PROJECT_TOKEN }}
-          coverage-reports: ${{ github.workspace }}/coverage.info
+#      - name: Build coverage
+#        run: nix-shell --run 'build_coverage'
+#      - name: Upload coverage report to Codacy
+#        if: ${{ github.actor != 'dependabot[bot]' }}
+#        uses: codacy/codacy-coverage-reporter-action@89d6c85cfafaec52c72b6c5e8b2878d33104c699 # v1.3.0
+#        with:
+#          project-token: ${{ secrets.CODACY_PROJECT_TOKEN }}
+#          coverage-reports: ${{ github.workspace }}/coverage.info
 
   clang-format:
     name: "Run clang-format"

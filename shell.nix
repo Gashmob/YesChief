@@ -23,6 +23,7 @@ pkgs.mkShellNoCC {
     pkgs.nodejs_20
     pnpm
     pkgs.httpie
+    pkgs.doxygen
   ];
 
   shellHook = ''
