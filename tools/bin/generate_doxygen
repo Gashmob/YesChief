@@ -5,13 +5,13 @@ set -euo pipefail
 cd "$ROOT_DIR"
 
 # Cleanup
-rm -rf out/documentation out/doxygen-awesome-css.zip
+rm -rf out/documentation
 mkdir -p out/documentation/html/doxygen-awesome-css
 
 # Style
 style_version="568f56cde6ac78b6dfcc14acd380b2e745c301ea" # 2.3.4
-https -d -o out/doxygen-awesome-css.zip https://github.com/jothepro/doxygen-awesome-css/archive/$style_version.zip # 2.3.4
-unzip out/doxygen-awesome-css.zip -d out/documentation/html/doxygen-awesome-css
+# Got the archive from command `https -d -o tools/doxygen/doxygen-awesome-css.zip https://github.com/jothepro/doxygen-awesome-css/archive/568f56cde6ac78b6dfcc14acd380b2e745c301ea.zip`
+unzip tools/doxygen/doxygen-awesome-css.zip -d out/documentation/html/doxygen-awesome-css
 mv out/documentation/html/doxygen-awesome-css/doxygen-awesome-css-$style_version/* out/documentation/html/doxygen-awesome-css
 rm -rf out/documentation/html/doxygen-awesome-css/doxygen-awesome-css-$style_version
 
