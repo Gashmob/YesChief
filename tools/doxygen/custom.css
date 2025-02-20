@@ -1,0 +1,11 @@
+/* Some override for doxygen-awesome-css */
+
+html {
+    --side-nav-arrow-opacity: 1;
+    --side-nav-arrow-hover-opacity: 1;
+}
+
+.arrow {
+    font-size: 60%;
+    padding-bottom: 3px;
+}
