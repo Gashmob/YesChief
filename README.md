@@ -1,7 +1,7 @@
 # YesChief!
 
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-![Version](version.svg)
+[![License: MIT](https://img.shields.io/github/license/gashmob/yeschief)](https://opensource.org/licenses/MIT)
+![Version](https://img.shields.io/github/v/release/gashmob/yeschief?include_prereleases)
 
 C++ library helping you to easily create manage options and commands of your CLI.
 

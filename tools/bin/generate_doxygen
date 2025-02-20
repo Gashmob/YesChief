@@ -17,4 +17,3 @@ rm -rf out/documentation/html/doxygen-awesome-css/doxygen-awesome-css-$style_ver
 
 # Generation
 doxygen
-cp version.svg out/documentation/html
