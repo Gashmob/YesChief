@@ -13,9 +13,6 @@ boolean (present or not).
 // All begins with the CLI object, it represents your program
 auto cli = CLI("MyProgram", "Short description of MyProgram");
 
-// General configuration
-cli.setLongDescription("Long description of MyProgram");
-
 // You can then add some options
 // The parameters are name and description
 // For the name you can set only a long name, or set also a short name by doing "<long>,<short>"
@@ -60,9 +57,6 @@ Each command have a name, a short description and an optional long description
 ```c++
 // All begins with the CLI object, it represents your program
 auto cli = CLI("MyProgram", "Short description of MyProgram");
-
-// General configuration
-cli.setLongDescription("Long description of MyProgram");
 
 // You can then define commands with class implementation of `Command`
 class MyCommand : public Command {
