@@ -22,7 +22,3 @@
  * SOFTWARE.
  */
 #include "yeschief.h"
-
-auto yeschief::addition(const int a, const int b) -> int {
-    return a + b;
-}
