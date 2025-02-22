@@ -33,5 +33,17 @@
             <anchorfile>cpp/utility/any</anchorfile>
             <anchor></anchor>
         </member>
+        <member kind="function">
+            <type>T</type>
+            <name>ostream</name>
+            <anchorfile>cpp/io/basic_ostream</anchorfile>
+            <anchor></anchor>
+        </member>
+        <member kind="function">
+            <type>T</type>
+            <name>cout</name>
+            <anchorfile>cpp/io/cout</anchorfile>
+            <anchor></anchor>
+        </member>
     </compound>
 </tagfile>

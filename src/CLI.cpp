@@ -37,3 +37,11 @@ auto CLI::run(const int argc, char **argv) const -> std::expected<CLIResults, Fa
     CLIResults results({});
     return results;
 }
+
+auto CLI::help(std::ostream &out) const -> void {
+    out << "usage:\n"
+        << "\t" << _name << "\n"
+        << "\n"
+        << _description << "\n"
+        << "\n";
+}

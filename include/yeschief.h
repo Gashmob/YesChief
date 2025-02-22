@@ -31,6 +31,7 @@
 
 #include <any>
 #include <expected>
+#include <iostream>
 #include <map>
 #include <optional>
 #include <string>
@@ -176,8 +177,10 @@ class CLI final {
      * ```
      *
      * To see example of outputs, please refer to the usage documentation: [Usage documentation](USAGE.md)
+     *
+     * @param out Out stream on which help message is printed (default to console output STDOUT)
      */
-    auto help() const -> void;
+    auto help(std::ostream &out = std::cout) const -> void;
 
   private:
     std::string _name;
