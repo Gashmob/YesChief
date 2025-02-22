@@ -37,3 +37,36 @@ TEST(CLI, itReturnsFault) {
     ASSERT_FALSE(result);
     ASSERT_STREQ("argc is greater than 0", result.error().message.c_str());
 }
+
+TEST(CLI, helpMessage) {
+    const auto cli = yeschief::CLI(
+        "my-program",
+        "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Etiam volutpat vitae felis id ornare. Etiam ac\n"
+        "sollicitudin arcu. Morbi aliquet mauris varius vestibulum gravida. Mauris quis laoreet lectus. Sed sit amet\n"
+        "pharetra tellus. Duis sed egestas dolor. Suspendisse potenti. Proin maximus efficitur tincidunt. "
+        "Pellentesque\n"
+        "eu sodales dui. Vestibulum hendrerit finibus tortor, accumsan tincidunt urna maximus feugiat. Vivamus "
+        "rhoncus\n"
+        "felis lacus, at ultricies ante consequat vitae. Mauris eu dignissim ex, at malesuada dui. Mauris sagittis\n"
+        "mattis accumsan."
+    );
+    std::stringstream ss;
+    cli.help(ss);
+    const std::string result(std::istreambuf_iterator<char>(ss), {});
+
+    ASSERT_STREQ(
+        "usage:\n"
+        "\tmy-program\n"
+        "\n"
+        "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Etiam volutpat vitae felis id ornare. Etiam ac\n"
+        "sollicitudin arcu. Morbi aliquet mauris varius vestibulum gravida. Mauris quis laoreet lectus. Sed sit amet\n"
+        "pharetra tellus. Duis sed egestas dolor. Suspendisse potenti. Proin maximus efficitur tincidunt. "
+        "Pellentesque\n"
+        "eu sodales dui. Vestibulum hendrerit finibus tortor, accumsan tincidunt urna maximus feugiat. Vivamus "
+        "rhoncus\n"
+        "felis lacus, at ultricies ante consequat vitae. Mauris eu dignissim ex, at malesuada dui. Mauris sagittis\n"
+        "mattis accumsan.\n"
+        "\n",
+        result.c_str()
+    );
+}
