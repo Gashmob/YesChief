@@ -1,4 +1,4 @@
-/**
+/*
  * MIT License
  *
  * Copyright (c) 2025-Present Kevin Traini
@@ -24,6 +24,14 @@
 #include <gtest/gtest.h>
 #include <yeschief.h>
 
-TEST(Fake, fake) {
-    ASSERT_EQ(3, 1 + 2);
+TEST(CLIResults, itReturnsNulloptWhenNoValue) {
+    const auto results = yeschief::CLIResults({});
+    ASSERT_EQ(std::nullopt, results.get("something"));
+}
+
+TEST(CLIResults, itReturnsTheValueSet) {
+    const auto results
+        = yeschief::CLIResults({std::make_pair("something", 34), std::make_pair("foo", std::string("bar"))});
+    ASSERT_EQ(34, std::any_cast<int>(results.get("something").value()));
+    ASSERT_STREQ("bar", std::any_cast<std::string>(results.get("foo").value()).c_str());
 }

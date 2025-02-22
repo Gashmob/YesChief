@@ -31,6 +31,7 @@
 
 #include <any>
 #include <expected>
+#include <map>
 #include <optional>
 #include <string>
 
@@ -71,7 +72,7 @@ class CLI final {
      * @param name Name of your program
      * @param description Description of your program
      */
-    CLI(const std::string &name, const std::string &description);
+    CLI(std::string name, std::string description);
 
     /**
      * Add an option to your program.
@@ -137,7 +138,7 @@ class CLI final {
      * @param argv Array of argument
      * @return The result of the parsing or a Fault if something went wrong
      */
-    auto run(int argc, char **argv) const -> std::expected<const CLIResults &, const Fault &>;
+    auto run(int argc, char **argv) const -> std::expected<CLIResults, Fault>;
 
     /**
      * Display a help message built from defined options or commands with this template:
@@ -177,6 +178,10 @@ class CLI final {
      * To see example of outputs, please refer to the usage documentation: [Usage documentation](USAGE.md)
      */
     auto help() const -> void;
+
+  private:
+    std::string _name;
+    std::string _description;
 };
 
 /**
@@ -236,6 +241,11 @@ class Command {
 class CLIResults final {
   public:
     /**
+     * @param values Values for each given option
+     */
+    explicit CLIResults(const std::map<std::string, std::any> &values);
+
+    /**
      * Returns value set by the user for a specific option. If the user doesn't have set the option, then it returns
      * std::nullopt
      *
@@ -243,6 +253,9 @@ class CLIResults final {
      * @return Value of the option or std::nullopt if option has no value
      */
     [[nodiscard]] auto get(const std::string &option) const -> std::optional<std::any>;
+
+  private:
+    std::map<std::string, std::any> _values;
 };
 } // namespace yeschief
 

@@ -1,4 +1,4 @@
-/**
+/*
  * MIT License
  *
  * Copyright (c) 2025-Present Kevin Traini
@@ -21,4 +21,19 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
-#include "yeschief.h"
+#include "test_tools.hpp"
+
+#include <gtest/gtest.h>
+#include <yeschief.h>
+
+TEST(CLI, itReturnsResults) {
+    const auto cli = yeschief::CLI("name", "description");
+    ASSERT_TRUE(cli.run(0, {}));
+}
+
+TEST(CLI, itReturnsFault) {
+    const auto cli    = yeschief::CLI("name", "description");
+    const auto result = cli.run(1, toStringArray({"name"}).data());
+    ASSERT_FALSE(result);
+    ASSERT_STREQ("argc is greater than 0", result.error().message.c_str());
+}
