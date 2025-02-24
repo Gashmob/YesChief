@@ -26,19 +26,33 @@
 #include <gtest/gtest.h>
 #include <yeschief.h>
 
-TEST(CLI, itReturnsResults) {
-    const auto cli = yeschief::CLI("name", "description");
-    ASSERT_TRUE(cli.run(0, {}));
+TEST(CLI, addOption) {
+    yeschief::CLI cli("name", "description");
+    cli.addOption("name", "My option");
 }
 
-TEST(CLI, itReturnsFault) {
-    const auto cli    = yeschief::CLI("name", "description");
-    const auto result = cli.run(1, toStringArray({"name"}).data());
-    ASSERT_FALSE(result);
-    ASSERT_STREQ("argc is greater than 0", result.error().message.c_str());
+TEST(CLI, addOptionWithShortName) {
+    yeschief::CLI cli("name", "description");
+    cli.addOption("name,n", "My option");
 }
 
-TEST(CLI, helpMessage) {
+TEST(CLI, addOptionWithInvalidShortName) {
+    yeschief::CLI cli("name", "description");
+    ASSERT_THROW(cli.addOption("name,foo", "My option"), std::logic_error);
+}
+
+TEST(CLI, addOptionMultiple) {
+    yeschief::CLI cli("name", "description");
+    cli.addOption("name", "My option").addOption("help", "Help message");
+}
+
+TEST(CLI, addOptionThrowIfAddExisting) {
+    yeschief::CLI cli("name", "description");
+    cli.addOption("name", "My option");
+    ASSERT_THROW(cli.addOption("name", "My option"), std::logic_error);
+}
+
+TEST(CLI, helpWithoutOptions) {
     const auto cli = yeschief::CLI(
         "my-program",
         "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Etiam volutpat vitae felis id ornare. Etiam ac\n"
@@ -69,4 +83,86 @@ TEST(CLI, helpMessage) {
         "\n",
         result.c_str()
     );
+}
+
+TEST(CLI, helpWithOptions) {
+    yeschief::CLI cli("cli", "description");
+    cli.addOption("name,n", "My option", {.required = true}).addOption("help", "Multiline\nhelp message");
+    std::stringstream ss;
+    cli.help(ss);
+    const std::string result(std::istreambuf_iterator<char>(ss), {});
+
+    ASSERT_STREQ(
+        "usage:\n"
+        "\tcli [OPTIONS] --name\n"
+        "\n"
+        "description\n"
+        "\n"
+        "Options:\n"
+        "\n"
+        "\t--name, -n REQUIRED\n"
+        "\t\tMy option\n"
+        "\t--help\n"
+        "\t\tMultiline\n"
+        "\t\thelp message\n",
+        result.c_str()
+    );
+}
+
+TEST(CLI, runReturnsFaultWhenArgc0) {
+    const yeschief::CLI cli("name", "description");
+    const auto result = cli.run(0, {});
+    ASSERT_FALSE(result);
+    ASSERT_EQ(yeschief::FaultType::InvalidArgs, result.error().type);
+}
+
+TEST(CLI, runReturnsEmptyWhenArgc1) {
+    const yeschief::CLI cli("name", "description");
+    const auto result = cli.run(1, toStringArray({"name"}).data());
+    ASSERT_TRUE(result);
+}
+
+TEST(CLI, runReturnsFaultWhenUnrecognizedLongOption) {
+    const yeschief::CLI cli("name", "description");
+    const auto result = cli.run(2, toStringArray({"name", "--foo"}).data());
+    ASSERT_FALSE(result);
+    ASSERT_EQ(yeschief::FaultType::UnrecognizedOption, result.error().type);
+}
+
+TEST(CLI, runReturnsFaultWhenUnrecognizedShortOption) {
+    const yeschief::CLI cli("name", "description");
+    const auto result = cli.run(2, toStringArray({"name", "-f"}).data());
+    ASSERT_FALSE(result);
+    ASSERT_EQ(yeschief::FaultType::UnrecognizedOption, result.error().type);
+}
+
+TEST(CLI, runReturnsFaultWhenUnrecognizedArguement) {
+    const yeschief::CLI cli("name", "description");
+    const auto result = cli.run(2, toStringArray({"name", "bar"}).data());
+    ASSERT_FALSE(result);
+    ASSERT_EQ(yeschief::FaultType::UnrecognizedOption, result.error().type);
+}
+
+TEST(CLI, runReturnsResultsWhenLongOptionGiven) {
+    yeschief::CLI cli("name", "description");
+    cli.addOption("foo,f", "Bar?");
+    const auto result = cli.run(2, toStringArray({"name", "--foo"}).data());
+    ASSERT_TRUE(result);
+    ASSERT_TRUE(result.value().get("foo"));
+}
+
+TEST(CLI, runReturnsResultWhenShortOptionGiven) {
+    yeschief::CLI cli("name", "description");
+    cli.addOption("foo,f", "Bar?");
+    const auto result = cli.run(2, toStringArray({"name", "-f"}).data());
+    ASSERT_TRUE(result);
+    ASSERT_TRUE(result.value().get("foo"));
+}
+
+TEST(CLI, runReturnsFaultWhenMissingRequiredOption) {
+    yeschief::CLI cli("name", "description");
+    cli.addOption("foo,f", "Bar?", {.required = true});
+    const auto result = cli.run(1, toStringArray({"name"}).data());
+    ASSERT_FALSE(result);
+    ASSERT_EQ(yeschief::FaultType::MissingRequiredOption, result.error().type);
 }

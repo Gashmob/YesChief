@@ -33,11 +33,14 @@
 #include <expected>
 #include <iostream>
 #include <map>
+#include <memory>
 #include <optional>
 #include <string>
+#include <vector>
 
 namespace yeschief {
 class CLI;
+class Option;
 class OptionGroup;
 class Command;
 class CLIResults;
@@ -55,6 +58,24 @@ typedef struct {
 } OptionConfiguration;
 
 /**
+ * Different types of Fault, ease the treatment of Faults
+ */
+typedef enum {
+    /**
+     * Has received bad arguments. Mostly a dev error and not a user one
+     */
+    InvalidArgs,
+    /**
+     * User have given an unrecognized option
+     */
+    UnrecognizedOption,
+    /**
+     * User have not given a required option
+     */
+    MissingRequiredOption,
+} FaultType;
+
+/**
  * Wrapper around an exception message
  */
 typedef struct {
@@ -62,6 +83,10 @@ typedef struct {
      * The message of the exception. Can be useful for the user to understand what is wrong
      */
     std::string message;
+    /**
+     * Type of the fault
+     */
+    FaultType type;
 } Fault;
 
 /**
@@ -90,8 +115,11 @@ class CLI final {
      * @param configuration Advanced configuration
      * @return The CLI object itself to chain calls
      */
-    auto addOption(const std::string &name, const std::string &description, OptionConfiguration &configuration)
-        -> CLI &;
+    auto addOption(
+        const std::string &name,
+        const std::string &description,
+        const OptionConfiguration &configuration = {.required = false}
+    ) -> CLI &;
 
     /**
      * Add a group of options to your program. You can then add options to your group the exact same way you add them to
@@ -185,13 +213,52 @@ class CLI final {
   private:
     std::string _name;
     std::string _description;
+    std::map<std::string, OptionGroup> _groups;
+    std::map<std::string, std::shared_ptr<Option>> _options;
+
+    [[nodiscard]] auto buildUsageHelp() const -> std::string;
+};
+
+/**
+ * An option, nothing else
+ */
+class Option final {
+  public:
+    /**
+     * @param name Name of the option (`--name`)
+     * @param short_name Short name of the option (`-n`)
+     * @param description What is does?
+     * @param required User must give it
+     */
+    Option(const std::string &name, const std::string &short_name, const std::string &description, bool required);
+
+    [[nodiscard]] auto getName() const -> std::string;
+
+    [[nodiscard]] auto getShortName() const -> std::string;
+
+    [[nodiscard]] auto getDescription() const -> std::string;
+
+    [[nodiscard]] auto isRequired() const -> bool;
+
+  private:
+    std::string _name;
+    std::string _short_name;
+    std::string _description;
+    bool _required;
 };
 
 /**
  * Represents a group of options under the same namespace
  */
 class OptionGroup final {
+    friend class CLI;
+
   public:
+    /**
+     * @param parent Owner of this group
+     */
+    explicit OptionGroup(CLI *parent);
+
     /**
      * Add an option to your group.
      *
@@ -209,6 +276,12 @@ class OptionGroup final {
      */
     auto addOption(const std::string &name, const std::string &description, OptionConfiguration &configuration)
         -> OptionGroup &;
+
+  private:
+    CLI *_parent;
+    std::vector<std::shared_ptr<Option>> _options;
+
+    auto addOption(const std::shared_ptr<Option> &option) -> void;
 };
 
 /**
