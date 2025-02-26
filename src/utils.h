@@ -24,6 +24,10 @@
 #ifndef UTILS_H
 #define UTILS_H
 
+#include "yeschief.h"
+
+#include <expected>
+#include <map>
 #include <string>
 #include <vector>
 
@@ -31,6 +35,22 @@ namespace yeschief {
 auto join(const std::vector<std::string> &strings, const std::string &delimiter = "") -> std::string;
 
 auto split(const std::string &str, const std::string &delimiter) -> std::vector<std::string>;
+
+typedef struct {
+    std::map<std::string, std::vector<std::string>> raw_results;
+    std::vector<std::string> option_order;
+} ArgvParsingResult;
+
+auto parseArgv(int argc, char **argv, const std::vector<std::string> &allowed_options)
+    -> std::expected<ArgvParsingResult, Fault>;
+
+auto toBoolean(const std::string &value) -> std::expected<bool, Fault>;
+
+auto toInt(const std::string &value) -> std::expected<int, Fault>;
+
+auto toFloat(const std::string &value) -> std::expected<float, Fault>;
+
+auto toDouble(const std::string &value) -> std::expected<double, Fault>;
 } // namespace yeschief
 
 #endif // UTILS_H

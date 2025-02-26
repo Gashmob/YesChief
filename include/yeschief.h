@@ -35,6 +35,7 @@
 #include <map>
 #include <memory>
 #include <optional>
+#include <regex>
 #include <string>
 #include <vector>
 
@@ -54,7 +55,11 @@ typedef struct {
      *
      * `CLI::run` will return a `Fault` if a required option is not set by the user
      */
-    bool required;
+    bool required          = false;
+    /**
+     * Placeholder in help message for the option value
+     */
+    std::string value_help = "VALUE";
 } OptionConfiguration;
 
 /**
@@ -73,6 +78,10 @@ typedef enum {
      * User have not given a required option
      */
     MissingRequiredOption,
+    /**
+     * User have given a wrongly typed value for option
+     */
+    InvalidOptionType,
 } FaultType;
 
 /**
@@ -88,6 +97,81 @@ typedef struct {
      */
     FaultType type;
 } Fault;
+
+/**
+ * An option, nothing else
+ */
+class Option final {
+  public:
+    /**
+     * @param name Name of the option (`--name`)
+     * @param short_name Short name of the option (`-n`)
+     * @param description What is does?
+     * @param type Type of the option (bool,int,...)
+     * @param configuration Advanced configuration of the option
+     */
+    Option(
+        const std::string &name,
+        const std::string &short_name,
+        const std::string &description,
+        const std::type_info &type,
+        const OptionConfiguration &configuration
+    );
+
+    [[nodiscard]] auto getName() const -> std::string;
+
+    [[nodiscard]] auto getShortName() const -> std::string;
+
+    [[nodiscard]] auto getDescription() const -> std::string;
+
+    [[nodiscard]] auto getType() const -> const std::type_info &;
+
+    [[nodiscard]] auto getConfiguration() const -> OptionConfiguration;
+
+  private:
+    const std::string _name;
+    const std::string _short_name;
+    const std::string _description;
+    const std::type_info &_type;
+    const OptionConfiguration _configuration;
+};
+
+/**
+ * Represents a group of options under the same namespace
+ */
+class OptionGroup final {
+    friend class CLI;
+
+  public:
+    /**
+     * @param parent Owner of this group
+     */
+    explicit OptionGroup(CLI *parent);
+
+    /**
+     * Add an option to your group.
+     *
+     * The name of the option can be written in 2 ways:
+     * - "name" -> for `--name`
+     * - "name,n" -> for `--name` and `-n`
+     *
+     * For the second way, the format should always be `<long>,<short>`. For the long name you can have any length but
+     * the short name must be only 1 letter
+     *
+     * @param name Name of the option
+     * @param description Description of the option
+     * @param configuration Advanced configuration
+     * @return The OptionGroup object itself to chain calls
+     */
+    auto addOption(const std::string &name, const std::string &description, OptionConfiguration &configuration)
+        -> OptionGroup &;
+
+  private:
+    CLI *_parent;
+    std::vector<std::shared_ptr<Option>> _options;
+
+    auto addOption(const std::shared_ptr<Option> &option) -> void;
+};
 
 /**
  * Main class of the library. It represents the program itself and manage options and commands
@@ -115,11 +199,34 @@ class CLI final {
      * @param configuration Advanced configuration
      * @return The CLI object itself to chain calls
      */
-    auto addOption(
-        const std::string &name,
-        const std::string &description,
-        const OptionConfiguration &configuration = {.required = false}
-    ) -> CLI &;
+    template<typename T = bool>
+    auto
+    addOption(const std::string &name, const std::string &description, const OptionConfiguration &configuration = {})
+        -> CLI & {
+        if (_options.contains(name)) {
+            throw std::logic_error("CLI has already an option '" + name + "'");
+        }
+
+        std::string long_name = name;
+        std::string short_name;
+        const std::regex name_regex("(.*),(.*)");
+        if (std::smatch match; std::regex_match(name, match, name_regex)) {
+            if (match.size() == 3) {
+                long_name  = match[1].str();
+                short_name = match[2].str();
+                if (short_name.length() != 1 || ! isalpha(short_name[0])) {
+                    throw std::logic_error("Short name of an option can be only one letter, got '" + short_name + "'");
+                }
+            }
+        }
+
+        checkOptionType(typeid(T));
+        auto option = std::make_shared<Option>(long_name, short_name, description, typeid(T), configuration);
+        _options.insert(std::make_pair(long_name, option));
+        _groups.at("").addOption(option);
+
+        return *this;
+    }
 
     /**
      * Add a group of options to your program. You can then add options to your group the exact same way you add them to
@@ -217,71 +324,14 @@ class CLI final {
     std::map<std::string, std::shared_ptr<Option>> _options;
 
     [[nodiscard]] auto buildUsageHelp() const -> std::string;
-};
 
-/**
- * An option, nothing else
- */
-class Option final {
-  public:
-    /**
-     * @param name Name of the option (`--name`)
-     * @param short_name Short name of the option (`-n`)
-     * @param description What is does?
-     * @param required User must give it
-     */
-    Option(const std::string &name, const std::string &short_name, const std::string &description, bool required);
+    [[nodiscard]] static auto buildOptionUsageHelp(const std::shared_ptr<Option> &option) -> std::string;
 
-    [[nodiscard]] auto getName() const -> std::string;
+    static auto checkOptionType(const std::type_info &type) -> void;
 
-    [[nodiscard]] auto getShortName() const -> std::string;
-
-    [[nodiscard]] auto getDescription() const -> std::string;
-
-    [[nodiscard]] auto isRequired() const -> bool;
-
-  private:
-    std::string _name;
-    std::string _short_name;
-    std::string _description;
-    bool _required;
-};
-
-/**
- * Represents a group of options under the same namespace
- */
-class OptionGroup final {
-    friend class CLI;
-
-  public:
-    /**
-     * @param parent Owner of this group
-     */
-    explicit OptionGroup(CLI *parent);
-
-    /**
-     * Add an option to your group.
-     *
-     * The name of the option can be written in 2 ways:
-     * - "name" -> for `--name`
-     * - "name,n" -> for `--name` and `-n`
-     *
-     * For the second way, the format should always be `<long>,<short>`. For the long name you can have any length but
-     * the short name must be only 1 letter
-     *
-     * @param name Name of the option
-     * @param description Description of the option
-     * @param configuration Advanced configuration
-     * @return The OptionGroup object itself to chain calls
-     */
-    auto addOption(const std::string &name, const std::string &description, OptionConfiguration &configuration)
-        -> OptionGroup &;
-
-  private:
-    CLI *_parent;
-    std::vector<std::shared_ptr<Option>> _options;
-
-    auto addOption(const std::shared_ptr<Option> &option) -> void;
+    [[nodiscard]] static auto
+    getValueForOption(const std::shared_ptr<Option> &option, const std::vector<std::string> &values)
+        -> std::expected<std::any, Fault>;
 };
 
 /**

@@ -25,9 +25,10 @@
 #include <yeschief.h>
 
 TEST(Option, constructor) {
-    const yeschief::Option option("help", "h", "Some description", false);
+    const yeschief::Option option("help", "h", "Some description", typeid(bool), {.required = false});
     ASSERT_STREQ("help", option.getName().c_str());
     ASSERT_STREQ("h", option.getShortName().c_str());
     ASSERT_STREQ("Some description", option.getDescription().c_str());
-    ASSERT_FALSE(option.isRequired());
+    ASSERT_EQ(typeid(bool), option.getType());
+    ASSERT_FALSE(option.getConfiguration().required);
 }
