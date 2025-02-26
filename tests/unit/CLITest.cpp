@@ -23,8 +23,11 @@
  */
 #include "test_tools.hpp"
 
+#include <gmock/gmock.h>
 #include <gtest/gtest.h>
 #include <yeschief.h>
+
+using namespace ::testing;
 
 TEST(CLI, addOption) {
     yeschief::CLI cli("name", "description");
@@ -50,6 +53,16 @@ TEST(CLI, addOptionThrowIfAddExisting) {
     yeschief::CLI cli("name", "description");
     cli.addOption("name", "My option");
     ASSERT_THROW(cli.addOption("name", "My option"), std::logic_error);
+}
+
+TEST(CLI, addOptionThowIfInvalidType) {
+    yeschief::CLI cli("name", "description");
+    ASSERT_THROW(cli.addOption<yeschief::Fault>("name", "My option"), std::logic_error);
+}
+
+TEST(CLI, addOptionWithType) {
+    yeschief::CLI cli("name", "description");
+    cli.addOption<std::string>("name", "My option");
 }
 
 TEST(CLI, helpWithoutOptions) {
@@ -87,7 +100,7 @@ TEST(CLI, helpWithoutOptions) {
 
 TEST(CLI, helpWithOptions) {
     yeschief::CLI cli("cli", "description");
-    cli.addOption("name,n", "My option", {.required = true}).addOption("help", "Multiline\nhelp message");
+    cli.addOption<std::string>("name,n", "My option", {.required = true}).addOption("help", "Multiline\nhelp message");
     std::stringstream ss;
     cli.help(ss);
     const std::string result(std::istreambuf_iterator<char>(ss), {});
@@ -100,11 +113,13 @@ TEST(CLI, helpWithOptions) {
         "\n"
         "Options:\n"
         "\n"
-        "\t--name, -n REQUIRED\n"
+        "\t--name VALUE, -n VALUE [REQUIRED]\n"
         "\t\tMy option\n"
+        "\n"
         "\t--help\n"
         "\t\tMultiline\n"
-        "\t\thelp message\n",
+        "\t\thelp message\n"
+        "\n",
         result.c_str()
     );
 }
@@ -136,7 +151,7 @@ TEST(CLI, runReturnsFaultWhenUnrecognizedShortOption) {
     ASSERT_EQ(yeschief::FaultType::UnrecognizedOption, result.error().type);
 }
 
-TEST(CLI, runReturnsFaultWhenUnrecognizedArguement) {
+TEST(CLI, runReturnsFaultWhenUnrecognizedArgument) {
     const yeschief::CLI cli("name", "description");
     const auto result = cli.run(2, toStringArray({"name", "bar"}).data());
     ASSERT_FALSE(result);
@@ -165,4 +180,30 @@ TEST(CLI, runReturnsFaultWhenMissingRequiredOption) {
     const auto result = cli.run(1, toStringArray({"name"}).data());
     ASSERT_FALSE(result);
     ASSERT_EQ(yeschief::FaultType::MissingRequiredOption, result.error().type);
+}
+
+TEST(CLI, runReturnsResultWhenOptionGivenMultipleTimes) {
+    yeschief::CLI cli("name", "description");
+    cli.addOption<int>("foo,f", "Bar?");
+    const auto result = cli.run(5, toStringArray({"name", "--foo=2", "-f", "45", "--foo=12"}).data());
+    ASSERT_TRUE(result);
+    ASSERT_EQ(12, std::any_cast<int>(result.value().get("foo").value()));
+}
+
+TEST(CLI, runReturnsResultVectorWhenVectorOption) {
+    yeschief::CLI cli("name", "description");
+    cli.addOption<std::vector<std::string>>("foo,f", "Bar?");
+    const auto result = cli.run(3, toStringArray({"name", "-f=hello", "-f='world!'"}).data());
+    ASSERT_TRUE(result);
+    ASSERT_THAT(
+        std::any_cast<std::vector<std::string>>(result.value().get("foo").value()), ElementsAre("hello", "world!")
+    );
+}
+
+TEST(CLI, runReturnsFaultWhenOptionGivenWithBadType) {
+    yeschief::CLI cli("name", "description");
+    cli.addOption<int>("foo,f", "Bar?");
+    const auto result = cli.run(2, toStringArray({"name", "--foo=false"}).data());
+    ASSERT_FALSE(result);
+    ASSERT_EQ(yeschief::FaultType::InvalidOptionType, result.error().type);
 }

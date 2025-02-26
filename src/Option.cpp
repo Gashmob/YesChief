@@ -26,9 +26,13 @@
 using namespace yeschief;
 
 Option::Option(
-    const std::string &name, const std::string &short_name, const std::string &description, const bool required
+    const std::string &name,
+    const std::string &short_name,
+    const std::string &description,
+    const std::type_info &type,
+    const OptionConfiguration &configuration
 )
-    : _name(name), _short_name(short_name), _description(description), _required(required) {}
+    : _name(name), _short_name(short_name), _description(description), _type(type), _configuration(configuration) {}
 
 auto Option::getName() const -> std::string {
     return _name;
@@ -42,6 +46,10 @@ auto Option::getDescription() const -> std::string {
     return _description;
 }
 
-auto Option::isRequired() const -> bool {
-    return _required;
+auto Option::getType() const -> const std::type_info & {
+    return _type;
+}
+
+auto Option::getConfiguration() const -> OptionConfiguration {
+    return _configuration;
 }
