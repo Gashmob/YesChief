@@ -65,6 +65,17 @@ TEST(CLI, addOptionWithType) {
     cli.addOption<std::string>("name", "My option");
 }
 
+TEST(CLI, addGroupThenAddOption) {
+    yeschief::CLI cli("name", "description");
+    cli.addGroup("My group").addOption("foo", "bar");
+}
+
+TEST(CLI, addGroupThrowIfAddExisting) {
+    yeschief::CLI cli("name", "description");
+    cli.addGroup("My group").addOption("foo", "bar");
+    ASSERT_THROW(cli.addGroup("My group"), std::logic_error);
+}
+
 TEST(CLI, helpWithoutOptions) {
     const auto cli = yeschief::CLI(
         "my-program",
@@ -101,6 +112,7 @@ TEST(CLI, helpWithoutOptions) {
 TEST(CLI, helpWithOptions) {
     yeschief::CLI cli("cli", "description");
     cli.addOption<std::string>("name,n", "My option", {.required = true}).addOption("help", "Multiline\nhelp message");
+    cli.addGroup("Special").addOption("rand", "Display a random number");
     std::stringstream ss;
     cli.help(ss);
     const std::string result(std::istreambuf_iterator<char>(ss), {});
@@ -119,6 +131,11 @@ TEST(CLI, helpWithOptions) {
         "\t--help\n"
         "\t\tMultiline\n"
         "\t\thelp message\n"
+        "\n"
+        "Special:\n"
+        "\n"
+        "\t--rand\n"
+        "\t\tDisplay a random number\n"
         "\n",
         result.c_str()
     );
@@ -206,4 +223,12 @@ TEST(CLI, runReturnsFaultWhenOptionGivenWithBadType) {
     const auto result = cli.run(2, toStringArray({"name", "--foo=false"}).data());
     ASSERT_FALSE(result);
     ASSERT_EQ(yeschief::FaultType::InvalidOptionType, result.error().type);
+}
+
+TEST(CLI, runRetursResultWhenOptionIsInAnotherGroup) {
+    yeschief::CLI cli("name", "description");
+    cli.addGroup("My group").addOption("foo,f", "Bar?");
+    const auto result = cli.run(2, toStringArray({"name", "--foo"}).data());
+    ASSERT_TRUE(result);
+    ASSERT_TRUE(result.value().get("foo"));
 }

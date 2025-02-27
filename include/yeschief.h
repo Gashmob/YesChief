@@ -145,8 +145,9 @@ class OptionGroup final {
   public:
     /**
      * @param parent Owner of this group
+     * @param name Name of this group
      */
-    explicit OptionGroup(CLI *parent);
+    explicit OptionGroup(CLI *parent, std::string name);
 
     /**
      * Add an option to your group.
@@ -163,11 +164,14 @@ class OptionGroup final {
      * @param configuration Advanced configuration
      * @return The OptionGroup object itself to chain calls
      */
-    auto addOption(const std::string &name, const std::string &description, OptionConfiguration &configuration)
+    template<typename T = bool>
+    auto
+    addOption(const std::string &name, const std::string &description, const OptionConfiguration &configuration = {})
         -> OptionGroup &;
 
   private:
     CLI *_parent;
+    std::string _name;
     std::vector<std::shared_ptr<Option>> _options;
 
     auto addOption(const std::shared_ptr<Option> &option) -> void;
@@ -177,6 +181,8 @@ class OptionGroup final {
  * Main class of the library. It represents the program itself and manage options and commands
  */
 class CLI final {
+    friend class OptionGroup;
+
   public:
     /**
      * @param name Name of your program
@@ -202,31 +208,7 @@ class CLI final {
     template<typename T = bool>
     auto
     addOption(const std::string &name, const std::string &description, const OptionConfiguration &configuration = {})
-        -> CLI & {
-        if (_options.contains(name)) {
-            throw std::logic_error("CLI has already an option '" + name + "'");
-        }
-
-        std::string long_name = name;
-        std::string short_name;
-        const std::regex name_regex("(.*),(.*)");
-        if (std::smatch match; std::regex_match(name, match, name_regex)) {
-            if (match.size() == 3) {
-                long_name  = match[1].str();
-                short_name = match[2].str();
-                if (short_name.length() != 1 || ! isalpha(short_name[0])) {
-                    throw std::logic_error("Short name of an option can be only one letter, got '" + short_name + "'");
-                }
-            }
-        }
-
-        checkOptionType(typeid(T));
-        auto option = std::make_shared<Option>(long_name, short_name, description, typeid(T), configuration);
-        _options.insert(std::make_pair(long_name, option));
-        _groups.at("").addOption(option);
-
-        return *this;
-    }
+        -> CLI &;
 
     /**
      * Add a group of options to your program. You can then add options to your group the exact same way you add them to
@@ -332,6 +314,14 @@ class CLI final {
     [[nodiscard]] static auto
     getValueForOption(const std::shared_ptr<Option> &option, const std::vector<std::string> &values)
         -> std::expected<std::any, Fault>;
+
+    template<typename T = bool>
+    auto addOption(
+        const std::string &name,
+        const std::string &description,
+        const std::string &group_name,
+        const OptionConfiguration &configuration = {}
+    ) -> CLI &;
 };
 
 /**
@@ -384,5 +374,55 @@ class CLIResults final {
     std::map<std::string, std::any> _values;
 };
 } // namespace yeschief
+
+template<typename T>
+auto yeschief::OptionGroup::addOption(
+    const std::string &name, const std::string &description, const OptionConfiguration &configuration
+) -> OptionGroup & {
+    _parent->addOption<T>(name, description, _name, configuration);
+    return *this;
+}
+
+template<typename T>
+auto yeschief::CLI::addOption(
+    const std::string &name, const std::string &description, const OptionConfiguration &configuration
+) -> CLI & {
+    return addOption<T>(name, description, "", configuration);
+}
+
+template<typename T>
+auto yeschief::CLI::addOption(
+    const std::string &name,
+    const std::string &description,
+    const std::string &group_name,
+    const OptionConfiguration &configuration
+) -> CLI & {
+    if (_options.contains(name)) {
+        throw std::logic_error("CLI has already an option '" + name + "'");
+    }
+    if (! _groups.contains(group_name)) {
+        throw std::logic_error("Option group '" + group_name + "' does not exist");
+    }
+
+    std::string long_name = name;
+    std::string short_name;
+    const std::regex name_regex("(.*),(.*)");
+    if (std::smatch match; std::regex_match(name, match, name_regex)) {
+        if (match.size() == 3) {
+            long_name  = match[1].str();
+            short_name = match[2].str();
+            if (short_name.length() != 1 || ! isalpha(short_name[0])) {
+                throw std::logic_error("Short name of an option can be only one letter, got '" + short_name + "'");
+            }
+        }
+    }
+
+    checkOptionType(typeid(T));
+    auto option = std::make_shared<Option>(long_name, short_name, description, typeid(T), configuration);
+    _options.insert(std::make_pair(long_name, option));
+    _groups.at(group_name).addOption(option);
+
+    return *this;
+}
 
 #endif // YESCHIEF_H

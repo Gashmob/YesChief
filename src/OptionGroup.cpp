@@ -23,9 +23,11 @@
  */
 #include "yeschief.h"
 
+#include <utility>
+
 using namespace yeschief;
 
-OptionGroup::OptionGroup(CLI *parent): _parent(parent) {}
+OptionGroup::OptionGroup(CLI *parent, std::string name): _parent(parent), _name(std::move(name)) {}
 
 auto OptionGroup::addOption(const std::shared_ptr<Option> &option) -> void {
     _options.push_back(option);
