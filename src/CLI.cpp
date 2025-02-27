@@ -32,7 +32,16 @@
 using namespace yeschief;
 
 CLI::CLI(std::string name, std::string description): _name(std::move(name)), _description(std::move(description)) {
-    _groups.insert(std::make_pair("", OptionGroup(this)));
+    _groups.insert(std::make_pair("", OptionGroup(this, "")));
+}
+
+auto CLI::addGroup(const std::string &name) -> OptionGroup & {
+    if (_groups.contains(name)) {
+        throw std::logic_error("Group '" + name + "' already exists");
+    }
+
+    _groups.insert(std::make_pair(name, OptionGroup(this, name)));
+    return _groups.at(name);
 }
 
 auto CLI::run(const int argc, char **argv) const -> std::expected<CLIResults, Fault> {
