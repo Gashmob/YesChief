@@ -54,76 +54,102 @@ auto yeschief::split(const std::string &str, const std::string &delimiter) -> st
     return result;
 }
 
+auto yeschief::inArray(const std::vector<std::string> &array, const std::string &needle) -> bool {
+    return std::ranges::find(array, needle) != array.end();
+}
+
 auto yeschief::parseArgv(const int argc, char **argv, const std::vector<std::string> &allowed_options)
     -> std::expected<ArgvParsingResult, Fault> {
     auto count     = argc;
     auto arguments = argv;
     std::map<std::string, std::vector<std::string>> raw_results;
     std::vector<std::string> option_order;
-    const auto in_allowed_option = [&allowed_options](const std::string &option) -> bool {
-        return std::ranges::find(allowed_options, option) != allowed_options.end();
-    };
+    std::vector<std::string> positional_arguments;
 
     std::optional<std::string> current_option = std::nullopt;
+    bool in_positional                        = false;
     while (count > 0) {
         const auto argument = std::string(arguments[0]);
-        std::smatch match;
-        if (std::regex_match(argument, match, std::regex("^--([^=]*)=([^=]*)$"))
-            || std::regex_match(argument, match, std::regex("^-([^=])=([^=]*)$"))) {
-            if (current_option.has_value()) {
-                raw_results.at(current_option.value()).emplace_back("true");
-            }
+        if (in_positional) {
+            positional_arguments.push_back(argument);
+        } else {
+            std::smatch match;
+            if (std::regex_match(argument, match, std::regex("^--([^=]+)=([^=]+)$"))
+                || std::regex_match(argument, match, std::regex("^-([^=-])=([^=]+)$"))) {
+                if (! positional_arguments.empty()) {
+                    return std::unexpected<Fault>({
+                      .message = "Unrecognized option: " + positional_arguments[0],
+                      .type    = UnrecognizedOption,
+                    });
+                }
 
-            const std::string option = match[1];
-            if (! in_allowed_option(option)) {
-                return std::unexpected<Fault>({
-                  .message = "Unrecognized option: " + option,
-                  .type    = UnrecognizedOption,
-                });
-            }
-            if (! raw_results.contains(option)) {
-                raw_results.insert(std::make_pair(option, std::vector<std::string>()));
-            }
+                if (current_option.has_value()) {
+                    raw_results.at(current_option.value()).emplace_back("true");
+                }
 
-            std::string value = match[2];
-            if (std::smatch value_match; std::regex_match(value, value_match, std::regex("^(['\"])(.*)\\1$"))) {
-                value = value_match[2];
-            }
+                const std::string option = match[1];
+                if (! inArray(allowed_options, option)) {
+                    return std::unexpected<Fault>({
+                      .message = "Unrecognized option: " + option,
+                      .type    = UnrecognizedOption,
+                    });
+                }
+                if (! raw_results.contains(option)) {
+                    raw_results.insert(std::make_pair(option, std::vector<std::string>()));
+                }
 
-            raw_results.at(option).push_back(value);
-            option_order.push_back(option);
-            current_option = std::nullopt;
-        }
+                std::string value = match[2];
+                if (std::smatch value_match; std::regex_match(value, value_match, std::regex("^(['\"])(.*)\\1$"))) {
+                    value = value_match[2];
+                }
 
-        else if (std::regex_match(argument, match, std::regex("^--([^=]*)$"))
-                 || std::regex_match(argument, match, std::regex("^-([^=])$"))) {
-            if (current_option.has_value()) {
-                raw_results.at(current_option.value()).emplace_back("true");
-            }
-
-            const std::string option = match[1];
-            if (! in_allowed_option(option)) {
-                return std::unexpected<Fault>({
-                  .message = "Unrecognized option: " + option,
-                  .type    = UnrecognizedOption,
-                });
-            }
-            current_option = option;
-            if (! raw_results.contains(option)) {
-                raw_results.insert(std::make_pair(option, std::vector<std::string>()));
-            }
-            option_order.push_back(option);
-        }
-
-        else {
-            if (current_option.has_value()) {
-                raw_results.at(current_option.value()).push_back(argument);
+                raw_results.at(option).push_back(value);
+                option_order.push_back(option);
                 current_option = std::nullopt;
-            } else {
-                return std::unexpected<Fault>({
-                  .message = "Unrecognized option: " + argument,
-                  .type    = UnrecognizedOption,
-                });
+            }
+
+            else if (std::regex_match(argument, match, std::regex("^--([^=]+)$"))
+                     || std::regex_match(argument, match, std::regex("^-([^=-])$"))) {
+                if (! positional_arguments.empty()) {
+                    return std::unexpected<Fault>({
+                      .message = "Unrecognized option: " + positional_arguments[0],
+                      .type    = UnrecognizedOption,
+                    });
+                }
+
+                if (current_option.has_value()) {
+                    raw_results.at(current_option.value()).emplace_back("true");
+                }
+
+                const std::string option = match[1];
+                if (! inArray(allowed_options, option)) {
+                    return std::unexpected<Fault>({
+                      .message = "Unrecognized option: " + option,
+                      .type    = UnrecognizedOption,
+                    });
+                }
+                current_option = option;
+                if (! raw_results.contains(option)) {
+                    raw_results.insert(std::make_pair(option, std::vector<std::string>()));
+                }
+                option_order.push_back(option);
+            }
+
+            else if (argument == "--") {
+                if (current_option.has_value()) {
+                    raw_results.at(current_option.value()).emplace_back("true");
+                    current_option = std::nullopt;
+                }
+                in_positional = true;
+            }
+
+            else {
+                if (current_option.has_value()) {
+                    raw_results.at(current_option.value()).push_back(argument);
+                    current_option = std::nullopt;
+                } else {
+                    positional_arguments.push_back(argument);
+                }
             }
         }
 
@@ -136,8 +162,9 @@ auto yeschief::parseArgv(const int argc, char **argv, const std::vector<std::str
     }
 
     ArgvParsingResult parse_result = {
-      .raw_results  = raw_results,
-      .option_order = option_order,
+      .raw_results          = raw_results,
+      .option_order         = option_order,
+      .positional_arguments = positional_arguments,
     };
     return parse_result;
 }
@@ -183,4 +210,12 @@ auto yeschief::toDouble(const std::string &value) -> std::expected<double, Fault
       .message = "'" + value + "' cannot be parsed to an int value",
       .type    = InvalidOptionType,
     });
+}
+
+auto yeschief::toUpper(const std::string &str) -> std::string {
+    std::string result;
+    for (const auto c : str) {
+        result += toupper(c);
+    }
+    return result;
 }

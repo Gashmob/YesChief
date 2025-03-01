@@ -36,9 +36,12 @@ auto join(const std::vector<std::string> &strings, const std::string &delimiter 
 
 auto split(const std::string &str, const std::string &delimiter) -> std::vector<std::string>;
 
+auto inArray(const std::vector<std::string> &array, const std::string &needle) -> bool;
+
 typedef struct {
     std::map<std::string, std::vector<std::string>> raw_results;
     std::vector<std::string> option_order;
+    std::vector<std::string> positional_arguments;
 } ArgvParsingResult;
 
 auto parseArgv(int argc, char **argv, const std::vector<std::string> &allowed_options)
@@ -51,6 +54,8 @@ auto toInt(const std::string &value) -> std::expected<int, Fault>;
 auto toFloat(const std::string &value) -> std::expected<float, Fault>;
 
 auto toDouble(const std::string &value) -> std::expected<double, Fault>;
+
+auto toUpper(const std::string &str) -> std::string;
 } // namespace yeschief
 
 #endif // UTILS_H

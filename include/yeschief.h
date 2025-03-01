@@ -30,6 +30,7 @@
  */
 
 #include <any>
+#include <cstdarg>
 #include <expected>
 #include <iostream>
 #include <map>
@@ -236,10 +237,10 @@ class CLI final {
      *
      * Please note that if an option is repeatable it must be placed as the last one
      *
-     * @param option List of options names to parse as positional arguments
-     * @param ...
+     * @param option_name
+     * @param options List of options names to parse as positional arguments
      */
-    auto parsePositional(const std::string &option, ...) -> void;
+    template<typename... Tail> auto parsePositional(const std::string &option_name, Tail &&...options) -> void;
 
     /**
      * Parse argv against defined options and commands.
@@ -270,7 +271,7 @@ class CLI final {
      *
      * Positional arguments: <- if options and positional arguments not empty
      *
-     *     These arguments come after any options and in the order they are listed here.
+     *     These arguments come after options and in the order they are listed here.
      *     Only <REQUIRED POSITIONAL ARGUMENTS> is required.
      *
      *     <LIST OF POSITIONAL ARGUMENT>
@@ -304,8 +305,11 @@ class CLI final {
     std::string _description;
     std::map<std::string, OptionGroup> _groups;
     std::map<std::string, std::shared_ptr<Option>> _options;
+    std::vector<std::string> _positional_options;
 
     [[nodiscard]] auto buildUsageHelp() const -> std::string;
+
+    [[nodiscard]] auto buildPositionalHelp() const -> std::string;
 
     [[nodiscard]] static auto buildOptionUsageHelp(const std::shared_ptr<Option> &option) -> std::string;
 
@@ -320,8 +324,12 @@ class CLI final {
         const std::string &name,
         const std::string &description,
         const std::string &group_name,
-        const OptionConfiguration &configuration = {}
+        const OptionConfiguration &configuration
     ) -> CLI &;
+
+    auto parsePositional() -> void {
+        // Nothing to do here
+    }
 };
 
 /**
@@ -423,6 +431,32 @@ auto yeschief::CLI::addOption(
     _groups.at(group_name).addOption(option);
 
     return *this;
+}
+
+template<typename... Tail>
+auto yeschief::CLI::parsePositional(const std::string &option_name, Tail &&...options) -> void {
+    if (! _options.contains(option_name)) {
+        throw std::logic_error("Option '" + option_name + "' doesn't exist");
+    }
+    const auto option = _options.at(option_name);
+    if (! _positional_options.empty()) {
+        const auto last_option_name  = _positional_options[_positional_options.size() - 1];
+        const auto last_option       = _options.at(last_option_name);
+        const auto &last_option_type = last_option->getType();
+        if (last_option_type == typeid(std::vector<int>) || last_option_type == typeid(std::vector<float>)
+            || last_option_type == typeid(std::vector<double>)) {
+            throw std::logic_error("Cannot add a new positional argument after one with a list type");
+        }
+        if (option->getConfiguration().required && ! last_option->getConfiguration().required) {
+            throw std::logic_error(
+                "Option '" + option_name + "' is required but is placed after a non required one '" + last_option_name
+                + "'"
+            );
+        }
+    }
+
+    _positional_options.push_back(option_name);
+    parsePositional(std::forward<Tail>(options)...);
 }
 
 #endif // YESCHIEF_H

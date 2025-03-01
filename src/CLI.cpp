@@ -61,9 +61,45 @@ auto CLI::run(const int argc, char **argv) const -> std::expected<CLIResults, Fa
     if (! parse_results_expect.has_value()) {
         return std::unexpected(parse_results_expect.error());
     }
-    const auto &[raw_results, option_order] = parse_results_expect.value();
+    const auto &[raw_results, option_order, positional_arguments] = parse_results_expect.value();
     std::map<std::string, std::any> option_values;
     std::vector<std::string> missing_required;
+
+    if (_positional_options.empty() && ! positional_arguments.empty()) {
+        return std::unexpected<Fault>({
+          .message = "Unrecognized option: " + positional_arguments[0],
+          .type    = UnrecognizedOption,
+        });
+    }
+    auto positional_index = 0;
+    for (const auto &option_name : _positional_options) {
+        if (positional_index == positional_arguments.size()) {
+            break;
+        }
+
+        const auto &option      = _options.at(option_name);
+        const auto &option_type = option->getType();
+
+        if (option_type == typeid(std::vector<int>) || option_type == typeid(std::vector<float>)
+            || option_type == typeid(std::vector<double>)) {
+            auto values = std::vector(positional_arguments.begin() + positional_index, positional_arguments.end());
+            auto value  = getValueForOption(option, values);
+            if (! value.has_value()) {
+                return std::unexpected(value.error());
+            }
+            option_values.insert(std::make_pair(option_name, value.value()));
+            break;
+        }
+
+        auto value = getValueForOption(option, {positional_arguments[positional_index]});
+        if (! value.has_value()) {
+            return std::unexpected(value.error());
+        }
+        option_values.insert(std::make_pair(option_name, value.value()));
+
+        positional_index++;
+    }
+
     for (const auto &option : _options | std::ranges::views::values) {
         if (raw_results.contains(option->getName()) && raw_results.contains(option->getShortName())) {
             auto long_values_it  = raw_results.at(option->getName()).begin();
@@ -103,7 +139,7 @@ auto CLI::run(const int argc, char **argv) const -> std::expected<CLIResults, Fa
             option_values.insert(std::make_pair(option->getName(), value.value()));
         }
 
-        else if (option->getConfiguration().required) {
+        else if (option->getConfiguration().required && ! option_values.contains(option->getName())) {
             missing_required.push_back(option->getName());
         }
     }
@@ -207,6 +243,8 @@ auto CLI::help(std::ostream &out) const -> void {
         << _description << "\n"
         << "\n";
 
+    out << buildPositionalHelp();
+
     for (const auto &[name, group] : _groups) {
         if (group._options.empty()) {
             continue;
@@ -230,12 +268,60 @@ auto CLI::buildUsageHelp() const -> std::string {
         usage += " [OPTIONS]";
     }
     for (const auto &option : _options | std::ranges::views::values) {
-        if (option->getConfiguration().required) {
+        if (option->getConfiguration().required && ! inArray(_positional_options, option->getName())) {
             usage += " --" + option->getName();
+        }
+    }
+    for (const auto &option : _positional_options) {
+        if (_options.at(option)->getConfiguration().required) {
+            usage += " " + toUpper(option);
+        } else {
+            usage += " [" + toUpper(option) + "]";
         }
     }
 
     return usage;
+}
+
+auto CLI::buildPositionalHelp() const -> std::string {
+    if (_positional_options.empty()) {
+        return "";
+    }
+
+    std::string help
+        = "Positional arguments:\n"
+          "\n"
+          "\tThese arguments come after options and in the order they are listed here.\n";
+
+    if (_options.at(_positional_options[0])->getConfiguration().required) {
+        help += "\tOnly ";
+        std::vector<std::string> required;
+        for (const auto &option : _positional_options) {
+            if (_options.at(option)->getConfiguration().required) {
+                required.push_back(toUpper(option));
+            } else {
+                break;
+            }
+        }
+        help += join(required, ", ");
+        if (required.size() == 1) {
+            help += " is required.\n\n";
+        } else {
+            help += " are required.\n\n";
+        }
+    }
+
+    for (const auto &option_name : _positional_options) {
+        help += "\t" + toUpper(option_name);
+        const auto option = _options.at(option_name);
+        if (option->getConfiguration().required) {
+            help += " [REQUIRED]";
+        }
+        help += "\n\t\t";
+        help += join(split(option->getDescription(), "\n"), "\n\t\t") + "\n\n";
+    }
+
+    return help;
 }
 
 auto CLI::buildOptionUsageHelp(const std::shared_ptr<Option> &option) -> std::string {

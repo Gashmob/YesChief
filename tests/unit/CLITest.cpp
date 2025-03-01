@@ -76,6 +76,29 @@ TEST(CLI, addGroupThrowIfAddExisting) {
     ASSERT_THROW(cli.addGroup("My group"), std::logic_error);
 }
 
+TEST(CLI, parsePositionalThrowIfNonExisting) {
+    yeschief::CLI cli("name", "description");
+    ASSERT_THROW(cli.parsePositional("hello"), std::logic_error);
+}
+
+TEST(CLI, parsePositionalThrowIfRequiredAfterNonRequired) {
+    yeschief::CLI cli("name", "description");
+    cli.addOption("required", "This is required", {.required = true}).addOption("non-required", "This is not required");
+    ASSERT_THROW(cli.parsePositional("non-required", "required"), std::logic_error);
+}
+
+TEST(CLI, parsePositionalThrowIfOptionAfterListOne) {
+    yeschief::CLI cli("name", "description");
+    cli.addOption<std::vector<int>>("list", "This is a list").addOption("value", "This is not a list");
+    ASSERT_THROW(cli.parsePositional("list", "value"), std::logic_error);
+}
+
+TEST(CLI, parsePositional) {
+    yeschief::CLI cli("name", "description");
+    cli.addOption("foo", "Foo!", {.required = true}).addOption("bar", "Bar!");
+    cli.parsePositional("foo", "bar");
+}
+
 TEST(CLI, helpWithoutOptions) {
     const auto cli = yeschief::CLI(
         "my-program",
@@ -112,6 +135,9 @@ TEST(CLI, helpWithoutOptions) {
 TEST(CLI, helpWithOptions) {
     yeschief::CLI cli("cli", "description");
     cli.addOption<std::string>("name,n", "My option", {.required = true}).addOption("help", "Multiline\nhelp message");
+    cli.addOption<int>("number", "A number", {.value_help = "<n>"})
+        .addOption<std::string>("character", "A character", {.required = true});
+    cli.parsePositional("character", "number");
     cli.addGroup("Special").addOption("rand", "Display a random number");
     std::stringstream ss;
     cli.help(ss);
@@ -119,9 +145,20 @@ TEST(CLI, helpWithOptions) {
 
     ASSERT_STREQ(
         "usage:\n"
-        "\tcli [OPTIONS] --name\n"
+        "\tcli [OPTIONS] --name CHARACTER [NUMBER]\n"
         "\n"
         "description\n"
+        "\n"
+        "Positional arguments:\n"
+        "\n"
+        "\tThese arguments come after options and in the order they are listed here.\n"
+        "\tOnly CHARACTER is required.\n"
+        "\n"
+        "\tCHARACTER [REQUIRED]\n"
+        "\t\tA character\n"
+        "\n"
+        "\tNUMBER\n"
+        "\t\tA number\n"
         "\n"
         "Options:\n"
         "\n"
@@ -131,6 +168,12 @@ TEST(CLI, helpWithOptions) {
         "\t--help\n"
         "\t\tMultiline\n"
         "\t\thelp message\n"
+        "\n"
+        "\t--number <n>\n"
+        "\t\tA number\n"
+        "\n"
+        "\t--character VALUE [REQUIRED]\n"
+        "\t\tA character\n"
         "\n"
         "Special:\n"
         "\n"
@@ -225,10 +268,28 @@ TEST(CLI, runReturnsFaultWhenOptionGivenWithBadType) {
     ASSERT_EQ(yeschief::FaultType::InvalidOptionType, result.error().type);
 }
 
-TEST(CLI, runRetursResultWhenOptionIsInAnotherGroup) {
+TEST(CLI, runReturnsResultWhenOptionIsInAnotherGroup) {
     yeschief::CLI cli("name", "description");
     cli.addGroup("My group").addOption("foo,f", "Bar?");
     const auto result = cli.run(2, toStringArray({"name", "--foo"}).data());
     ASSERT_TRUE(result);
     ASSERT_TRUE(result.value().get("foo"));
+}
+
+TEST(CLI, runReturnsFaultWhenRequiredPositionalNotGiven) {
+    yeschief::CLI cli("name", "description");
+    cli.addOption<int>("foo", "bar", {.required = true});
+    cli.parsePositional("foo");
+    const auto result = cli.run(1, toStringArray({"name"}).data());
+    ASSERT_FALSE(result);
+    ASSERT_EQ(yeschief::FaultType::MissingRequiredOption, result.error().type);
+}
+
+TEST(CLI, runReturnsResultWhenPositionalGiven) {
+    yeschief::CLI cli("name", "description");
+    cli.addOption<int>("foo", "bar", {.required = true});
+    cli.parsePositional("foo");
+    const auto result = cli.run(2, toStringArray({"name", "2"}).data());
+    ASSERT_TRUE(result);
+    ASSERT_EQ(2, std::any_cast<int>(result->get("foo").value()));
 }
