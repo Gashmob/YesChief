@@ -62,10 +62,18 @@ TEST(utils, splitOnLongString) {
     ASSERT_THAT(yeschief::split("ahellobhelloc", "hello"), ElementsAre("a", "b", "c"));
 }
 
+TEST(utils, inArray) {
+    ASSERT_TRUE(yeschief::inArray({"a", "b", "c"}, "a"));
+    ASSERT_TRUE(yeschief::inArray({"a", "b", "c"}, "b"));
+    ASSERT_TRUE(yeschief::inArray({"a", "b", "c"}, "c"));
+    ASSERT_FALSE(yeschief::inArray({"a", "b", "c"}, "d"));
+}
+
 TEST(utils, parseArgvEmptyReturnsEmpty) {
-    const auto &[raw_results, option_order] = yeschief::parseArgv(0, {}, {}).value();
+    const auto &[raw_results, option_order, positional_arguments] = yeschief::parseArgv(0, {}, {}).value();
     ASSERT_THAT(raw_results, IsEmpty());
     ASSERT_THAT(option_order, IsEmpty());
+    ASSERT_THAT(positional_arguments, IsEmpty());
 }
 
 TEST(utils, parseArgvSimpleLongOption) {
@@ -149,10 +157,11 @@ TEST(utils, parseArgvShortOptionWithValues) {
 }
 
 TEST(utils, parseArgvMultipleOptions) {
-    const auto [raw_results, option_order]
+    const auto [raw_results, option_order, positional_arguments]
         = yeschief::parseArgv(3, toStringArray({"-n", "value", "--number=3"}).data(), {"n", "number"}).value();
     ASSERT_THAT(raw_results, ElementsAre(Pair("n", ElementsAre("value")), Pair("number", ElementsAre("3"))));
     ASSERT_THAT(option_order, ElementsAre("n", "number"));
+    ASSERT_THAT(positional_arguments, IsEmpty());
 }
 
 TEST(utils, parseArgvSetTrueWhenNoValue) {
@@ -166,16 +175,34 @@ TEST(utils, parseArgvSetTrueWhenNoValue) {
     );
 }
 
-TEST(utils, parseArgvFaultWhenValueGivenWithoutOption) {
-    const auto result = yeschief::parseArgv(1, toStringArray({"value"}).data(), {});
-    ASSERT_FALSE(result.has_value());
-    ASSERT_EQ(yeschief::FaultType::UnrecognizedOption, result.error().type);
-}
-
 TEST(utils, parseArgvFaultWhenOptionIsNotAllowed) {
     const auto result = yeschief::parseArgv(1, toStringArray({"--option"}).data(), {});
     ASSERT_FALSE(result.has_value());
     ASSERT_EQ(yeschief::FaultType::UnrecognizedOption, result.error().type);
+}
+
+TEST(utils, parseArgvFaultWhenOptionAfterPositional) {
+    const auto result = yeschief::parseArgv(2, toStringArray({"value", "--option"}).data(), {"option"});
+    ASSERT_FALSE(result.has_value());
+    ASSERT_EQ(yeschief::FaultType::UnrecognizedOption, result.error().type);
+}
+
+TEST(utils, parseArgvImplicitPositionalArguments) {
+    ASSERT_THAT(
+        yeschief::parseArgv(3, toStringArray({"--option", "value1", "value2"}).data(), {"option"})
+            .value()
+            .positional_arguments,
+        ElementsAre("value2") // value1 is stored for --option
+    );
+}
+
+TEST(utils, parseArgvExplicitPositionalArguments) {
+    ASSERT_THAT(
+        yeschief::parseArgv(5, toStringArray({"--option", "--", "value1", "value2", "--option2"}).data(), {"option"})
+            .value()
+            .positional_arguments,
+        ElementsAre("value1", "value2", "--option2")
+    );
 }
 
 TEST(utils, toBoolean) {
@@ -210,4 +237,8 @@ TEST(utils, toDouble) {
     ASSERT_EQ(-3.4, yeschief::toDouble("-3.4").value());
     ASSERT_EQ(.81, yeschief::toDouble("+.81").value());
     ASSERT_EQ(yeschief::FaultType::InvalidOptionType, yeschief::toDouble("world").error().type);
+}
+
+TEST(utils, toUpper) {
+    ASSERT_STREQ("UPPER_STR", yeschief::toUpper("upper_str").c_str());
 }
