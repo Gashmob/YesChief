@@ -21,48 +21,13 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
-#ifndef TEST_TOOLS_H
-#define TEST_TOOLS_H
+#include "test_tools.hpp"
 
-#include <string>
-#include <utility>
-#include <vector>
+#include <gtest/gtest.h>
 #include <yeschief.h>
 
-inline auto toStringArray(const std::vector<std::string> &data) -> std::vector<char *> {
-    std::vector<char *> strings;
-    strings.reserve(data.size());
-    for (auto &item : data) {
-        strings.push_back(const_cast<char *>(item.c_str()));
-    }
-
-    return strings;
+TEST(Command, test) {
+    const CommandStub command("my-command");
+    ASSERT_STREQ("my-command", command.getName().c_str());
+    ASSERT_STREQ("Stub class for Command.\nDescription on another line.", command.getDescription().c_str());
 }
-
-class CommandStub final : public yeschief::Command {
-  public:
-    explicit CommandStub(std::string name): _name(std::move(name)) {}
-
-    [[nodiscard]] auto getName() const -> std::string override {
-        return _name;
-    }
-
-    [[nodiscard]] auto getDescription() const -> std::string override {
-        return "Stub class for Command.\nDescription on another line.";
-    }
-
-    auto setup(yeschief::CLI &cli) -> void override {
-        cli.addOption<int>("exit", "Exit code of command");
-    }
-
-    auto run(const yeschief::CLIResults &results) -> int override {
-        const auto exit_code = std::any_cast<int>(results.get("exit").value_or(0));
-
-        return exit_code;
-    }
-
-  private:
-    std::string _name;
-};
-
-#endif // TEST_TOOLS_H

@@ -31,11 +31,17 @@
 
 using namespace yeschief;
 
-CLI::CLI(std::string name, std::string description): _name(std::move(name)), _description(std::move(description)) {
+CLI::CLI(std::string name, std::string description)
+    : _name(std::move(name)), _description(std::move(description)), _mode(std::nullopt) {
     _groups.insert(std::make_pair("", OptionGroup(this, "")));
 }
 
 auto CLI::addGroup(const std::string &name) -> OptionGroup & {
+    if (_mode.has_value() && _mode.value() == COMMANDS) {
+        throw std::logic_error("Cannot add an option group to a cli using commands");
+    }
+    _mode = OPTIONS;
+
     if (_groups.contains(name)) {
         throw std::logic_error("Group '" + name + "' already exists");
     }
@@ -44,12 +50,56 @@ auto CLI::addGroup(const std::string &name) -> OptionGroup & {
     return _groups.at(name);
 }
 
+auto CLI::addCommand(Command &command) -> CLI & {
+    if (_mode.has_value() && _mode.value() == OPTIONS) {
+        throw std::logic_error("Cannot add a command to a cli using options");
+    }
+    _mode = COMMANDS;
+
+    const auto name = command.getName();
+    if (_commands.contains(name)) {
+        throw std::logic_error("Command '" + name + "' already exists");
+    }
+
+    CLI command_cli(name, command.getDescription());
+    command.setup(command_cli);
+
+    _commands.insert(std::make_pair(name, &command));
+    _commands_cli.insert(std::make_pair(name, command_cli));
+
+    return *this;
+}
+
 auto CLI::run(const int argc, char **argv) const -> std::expected<CLIResults, Fault> {
     if (argc < 1) {
         return std::unexpected<Fault>({
           .message = "argc cannot be less than 1, argv should at least contains executable name",
           .type    = InvalidArgs,
         });
+    }
+
+    if (_mode.has_value() && _mode.value() == COMMANDS) {
+        auto count     = argc - 1;
+        auto arguments = argv + 1;
+        if (count == 0) {
+            auto results = CLIResults({});
+            return results;
+        }
+
+        const std::string command_name(arguments[0]);
+        if (! _commands.contains(command_name)) {
+            return std::unexpected<Fault>({
+              .message = "Command '" + command_name + "' not found",
+              .type    = UnknownCommand,
+            });
+        }
+        auto command       = _commands.at(command_name);
+        auto cli           = _commands_cli.at(command_name);
+        const auto results = cli.run(count, arguments);
+        if (! results.has_value()) {
+            return std::unexpected(results.error());
+        }
+        exit(command->run(results.value()));
     }
 
     std::vector<std::string> allowed_options;
@@ -243,20 +293,33 @@ auto CLI::help(std::ostream &out) const -> void {
         << _description << "\n"
         << "\n";
 
-    out << buildPositionalHelp();
-
-    for (const auto &[name, group] : _groups) {
-        if (group._options.empty()) {
-            continue;
-        }
-
-        out << (name.empty() ? "Options" : name) << ":\n"
+    if (_mode.has_value() && _mode.value() == COMMANDS) {
+        out << "Commands:\n"
             << "\n";
 
-        for (const auto &option : group._options) {
-            out << "\t" << buildOptionUsageHelp(option) << "\n"
-                << "\t\t" << join(split(option->getDescription(), "\n"), "\n\t\t") << "\n"
+        for (const auto &command : _commands | std::ranges::views::values) {
+            out << "\t" << _commands_cli.at(command->getName()).buildUsageHelp() << "\n";
+            if (! command->getDescription().empty()) {
+                out << "\t\t" << join(split(command->getDescription(), "\n"), "\n\t\t") << "\n";
+            }
+            out << "\n";
+        }
+    } else {
+        out << buildPositionalHelp();
+
+        for (const auto &[name, group] : _groups) {
+            if (group._options.empty()) {
+                continue;
+            }
+
+            out << (name.empty() ? "Options" : name) << ":\n"
                 << "\n";
+
+            for (const auto &option : group._options) {
+                out << "\t" << buildOptionUsageHelp(option) << "\n"
+                    << "\t\t" << join(split(option->getDescription(), "\n"), "\n\t\t") << "\n"
+                    << "\n";
+            }
         }
     }
 }
@@ -264,19 +327,23 @@ auto CLI::help(std::ostream &out) const -> void {
 auto CLI::buildUsageHelp() const -> std::string {
     auto usage = _name;
 
-    if (! _options.empty()) {
-        usage += " [OPTIONS]";
-    }
-    for (const auto &option : _options | std::ranges::views::values) {
-        if (option->getConfiguration().required && ! inArray(_positional_options, option->getName())) {
-            usage += " --" + option->getName();
+    if (_mode.has_value() && _mode.value() == COMMANDS) {
+        usage += " [COMMAND] [OPTIONS]";
+    } else {
+        if (! _options.empty()) {
+            usage += " [OPTIONS]";
         }
-    }
-    for (const auto &option : _positional_options) {
-        if (_options.at(option)->getConfiguration().required) {
-            usage += " " + toUpper(option);
-        } else {
-            usage += " [" + toUpper(option) + "]";
+        for (const auto &option : _options | std::ranges::views::values) {
+            if (option->getConfiguration().required && ! inArray(_positional_options, option->getName())) {
+                usage += " --" + option->getName();
+            }
+        }
+        for (const auto &option : _positional_options) {
+            if (_options.at(option)->getConfiguration().required) {
+                usage += " " + toUpper(option);
+            } else {
+                usage += " [" + toUpper(option) + "]";
+            }
         }
     }
 

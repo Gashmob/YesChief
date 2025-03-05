@@ -83,6 +83,10 @@ typedef enum {
      * User have given a wrongly typed value for option
      */
     InvalidOptionType,
+    /**
+     * Command not found
+     */
+    UnknownCommand,
 } FaultType;
 
 /**
@@ -184,6 +188,8 @@ class OptionGroup final {
 class CLI final {
     friend class OptionGroup;
 
+    enum Mode { OPTIONS, COMMANDS };
+
   public:
     /**
      * @param name Name of your program
@@ -229,7 +235,7 @@ class CLI final {
      * @param command The Command instance
      * @return The CLI object itself to chain calls
      */
-    auto addCommand(const Command &command) -> CLI &;
+    auto addCommand(Command &command) -> CLI &;
 
     /**
      * Allow to set some options as positional arguments. This way the user will no longer need to use option name to
@@ -303,9 +309,12 @@ class CLI final {
   private:
     std::string _name;
     std::string _description;
+    std::optional<Mode> _mode;
     std::map<std::string, OptionGroup> _groups;
     std::map<std::string, std::shared_ptr<Option>> _options;
     std::vector<std::string> _positional_options;
+    std::map<std::string, Command *> _commands;
+    std::map<std::string, CLI> _commands_cli;
 
     [[nodiscard]] auto buildUsageHelp() const -> std::string;
 
@@ -337,6 +346,14 @@ class CLI final {
  */
 class Command {
   public:
+    /**
+     * @return Name of the command
+     */
+    [[nodiscard]] virtual auto getName() const -> std::string = 0;
+    /**
+     * @return Description of the command
+     */
+    [[nodiscard]] virtual auto getDescription() const -> std::string;
     /**
      * Configure options or sub-commands of the current command.
      *
@@ -405,6 +422,11 @@ auto yeschief::CLI::addOption(
     const std::string &group_name,
     const OptionConfiguration &configuration
 ) -> CLI & {
+    if (_mode.has_value() && _mode.value() == COMMANDS) {
+        throw std::logic_error("Cannot add an option group to a cli using commands");
+    }
+    _mode = OPTIONS;
+
     if (_options.contains(name)) {
         throw std::logic_error("CLI has already an option '" + name + "'");
     }
