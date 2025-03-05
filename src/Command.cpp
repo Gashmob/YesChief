@@ -21,48 +21,14 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
-#ifndef TEST_TOOLS_H
-#define TEST_TOOLS_H
+#include "yeschief.h"
 
-#include <string>
-#include <utility>
-#include <vector>
-#include <yeschief.h>
+using namespace yeschief;
 
-inline auto toStringArray(const std::vector<std::string> &data) -> std::vector<char *> {
-    std::vector<char *> strings;
-    strings.reserve(data.size());
-    for (auto &item : data) {
-        strings.push_back(const_cast<char *>(item.c_str()));
-    }
-
-    return strings;
+auto Command::getDescription() const -> std::string {
+    return "";
 }
 
-class CommandStub final : public yeschief::Command {
-  public:
-    explicit CommandStub(std::string name): _name(std::move(name)) {}
-
-    [[nodiscard]] auto getName() const -> std::string override {
-        return _name;
-    }
-
-    [[nodiscard]] auto getDescription() const -> std::string override {
-        return "Stub class for Command.\nDescription on another line.";
-    }
-
-    auto setup(yeschief::CLI &cli) -> void override {
-        cli.addOption<int>("exit", "Exit code of command");
-    }
-
-    auto run(const yeschief::CLIResults &results) -> int override {
-        const auto exit_code = std::any_cast<int>(results.get("exit").value_or(0));
-
-        return exit_code;
-    }
-
-  private:
-    std::string _name;
-};
-
-#endif // TEST_TOOLS_H
+auto Command::setup(CLI &cli) -> void {
+    // Nothing to do
+}
