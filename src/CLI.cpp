@@ -189,6 +189,10 @@ auto CLI::run(const int argc, char **argv) const -> std::expected<CLIResults, Fa
             option_values.insert(std::make_pair(option->getName(), value.value()));
         }
 
+        else if (option->getConfiguration().default_value.has_value()) {
+            option_values.insert(std::make_pair(option->getName(), option->getConfiguration().default_value.value()));
+        }
+
         else if (option->getConfiguration().required && ! option_values.contains(option->getName())) {
             missing_required.push_back(option->getName());
         }

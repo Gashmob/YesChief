@@ -56,11 +56,15 @@ typedef struct {
      *
      * `CLI::run` will return a `Fault` if a required option is not set by the user
      */
-    bool required          = false;
+    bool required                         = false;
     /**
      * Placeholder in help message for the option value
      */
-    std::string value_help = "VALUE";
+    std::string value_help                = "VALUE";
+    /**
+     * Default value for this option. Will be set if option is not set by the user
+     */
+    std::optional<std::any> default_value = std::nullopt;
 } OptionConfiguration;
 
 /**

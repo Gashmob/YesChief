@@ -359,6 +359,14 @@ TEST(CLI, runReturnsResultWhenPositionalGiven) {
     ASSERT_EQ(2, std::any_cast<int>(result->get("foo").value()));
 }
 
+TEST(CLI, runReturnsResultForOptionWithDefaultValue) {
+    yeschief::CLI cli("name", "description");
+    cli.addOption<double>("foo", "bar", {.default_value = 3.14});
+    const auto result = cli.run(1, toStringArray({"name"}).data());
+    ASSERT_TRUE(result);
+    ASSERT_EQ(3.14, std::any_cast<double>(result->get("foo").value()));
+}
+
 TEST(CLI, runReturnsEmptyWhenNoCommands) {
     yeschief::CLI cli("name", "description");
     CommandStub command("my-command");
