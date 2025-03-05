@@ -65,6 +65,10 @@ typedef struct {
      * Default value for this option. Will be set if option is not set by the user
      */
     std::optional<std::any> default_value = std::nullopt;
+    /**
+     * Implicit value for this option. Will be set if option is given by the user without a value
+     */
+    std::optional<std::any> implicit_value = std::nullopt;
 } OptionConfiguration;
 
 /**
@@ -87,6 +91,10 @@ typedef enum {
      * User have given a wrongly typed value for option
      */
     InvalidOptionType,
+    /**
+     * Option need a value but user has not give one
+     */
+    MissingOptionValue,
     /**
      * Command not found
      */

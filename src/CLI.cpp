@@ -221,6 +221,18 @@ auto CLI::getValueForOption(const std::shared_ptr<Option> &option, const std::ve
     if (option->getType() == typeid(bool)) {
         return toAny(toBoolean(values[last_index]));
     }
+
+    if (values.size() == 1 && values[0] == "true") {
+        if (option->getConfiguration().implicit_value.has_value()) {
+            return option->getConfiguration().implicit_value.value();
+        } else {
+            return std::unexpected<Fault>({
+              .message = "Option '" + option->getName() + "' needs a value",
+              .type    = MissingOptionValue,
+            });
+        }
+    }
+
     if (option->getType() == typeid(std::string)) {
         return values[last_index];
     }

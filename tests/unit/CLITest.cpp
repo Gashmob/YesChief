@@ -364,7 +364,23 @@ TEST(CLI, runReturnsResultForOptionWithDefaultValue) {
     cli.addOption<double>("foo", "bar", {.default_value = 3.14});
     const auto result = cli.run(1, toStringArray({"name"}).data());
     ASSERT_TRUE(result);
-    ASSERT_EQ(3.14, std::any_cast<double>(result->get("foo").value()));
+    ASSERT_EQ(3.14, std::any_cast<double>(result.value().get("foo").value()));
+}
+
+TEST(CLI, runReturnsFaultIfOptionGivenWithoutValue) {
+    yeschief::CLI cli("name", "description");
+    cli.addOption<int>("foo", "bar");
+    const auto result = cli.run(2, toStringArray({"name", "--foo"}).data());
+    ASSERT_FALSE(result);
+    ASSERT_EQ(yeschief::FaultType::MissingOptionValue, result.error().type);
+}
+
+TEST(CLI, runReturnsResultIfImplicitOptionWithoutValue) {
+    yeschief::CLI cli("name", "description");
+    cli.addOption<int>("foo", "bar", {.implicit_value = 42});
+    const auto result = cli.run(2, toStringArray({"name", "--foo"}).data());
+    ASSERT_TRUE(result);
+    ASSERT_EQ(42, std::any_cast<int>(result.value().get("foo").value()));
 }
 
 TEST(CLI, runReturnsEmptyWhenNoCommands) {
