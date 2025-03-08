@@ -56,15 +56,15 @@ typedef struct {
      *
      * `CLI::run` will return a `Fault` if a required option is not set by the user
      */
-    bool required                         = false;
+    bool required                          = false;
     /**
      * Placeholder in help message for the option value
      */
-    std::string value_help                = "VALUE";
+    std::string value_help                 = "VALUE";
     /**
      * Default value for this option. Will be set if option is not set by the user
      */
-    std::optional<std::any> default_value = std::nullopt;
+    std::optional<std::any> default_value  = std::nullopt;
     /**
      * Implicit value for this option. Will be set if option is given by the user without a value
      */
@@ -199,6 +199,7 @@ class OptionGroup final {
  */
 class CLI final {
     friend class OptionGroup;
+    friend class HelpCommand;
 
     enum Mode { OPTIONS, COMMANDS };
 
@@ -247,7 +248,7 @@ class CLI final {
      * @param command The Command instance
      * @return The CLI object itself to chain calls
      */
-    auto addCommand(Command &command) -> CLI &;
+    auto addCommand(Command *command) -> CLI &;
 
     /**
      * Allow to set some options as positional arguments. This way the user will no longer need to use option name to
@@ -409,6 +410,28 @@ class CLIResults final {
 
   private:
     std::map<std::string, std::any> _values;
+};
+
+/**
+ * `help` command. It takes an optional parameter `[command]`
+ *
+ * - If no parameter is given, it prints the full help
+ * - If parameter is given, it prints help for given command name
+ */
+class HelpCommand final : public Command {
+  public:
+    explicit HelpCommand(CLI *cli);
+
+    [[nodiscard]] auto getName() const -> std::string override;
+
+    [[nodiscard]] auto getDescription() const -> std::string override;
+
+    auto setup(CLI &cli) -> void override;
+
+    auto run(const CLIResults &results) -> int override;
+
+  private:
+    CLI *_cli;
 };
 } // namespace yeschief
 

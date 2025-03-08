@@ -68,7 +68,7 @@ TEST(CLI, addOptionWithType) {
 TEST(CLI, addOptionThrowIfCommandAddedBefore) {
     yeschief::CLI cli("name", "description");
     CommandStub command("");
-    cli.addCommand(command);
+    cli.addCommand(&command);
     ASSERT_THROW(cli.addOption("name", "My option"), std::logic_error);
 }
 
@@ -86,35 +86,35 @@ TEST(CLI, addGroupThrowIfAddExisting) {
 TEST(CLI, addGroupThrowIfCommandAddedBefore) {
     yeschief::CLI cli("name", "description");
     CommandStub command("");
-    cli.addCommand(command);
+    cli.addCommand(&command);
     ASSERT_THROW(cli.addGroup("My group"), std::logic_error);
 }
 
 TEST(CLI, addCommand) {
     yeschief::CLI cli("name", "description");
     CommandStub command("");
-    cli.addCommand(command);
+    cli.addCommand(&command);
 }
 
 TEST(CLI, addCommandThrowIfExisting) {
     yeschief::CLI cli("name", "description");
     CommandStub command("my-command");
-    cli.addCommand(command);
-    ASSERT_THROW(cli.addCommand(command), std::logic_error);
+    cli.addCommand(&command);
+    ASSERT_THROW(cli.addCommand(&command), std::logic_error);
 }
 
 TEST(CLI, addCommandMultiple) {
     yeschief::CLI cli("name", "description");
     CommandStub command1("command_1");
     CommandStub command2("command_2");
-    cli.addCommand(command1).addCommand(command2);
+    cli.addCommand(&command1).addCommand(&command2);
 }
 
 TEST(CLI, addCommandThrowIfOptionsAddedBefore) {
     yeschief::CLI cli("name", "description");
     cli.addOption("name", "My option");
     CommandStub command("my-command");
-    ASSERT_THROW(cli.addCommand(command), std::logic_error);
+    ASSERT_THROW(cli.addCommand(&command), std::logic_error);
 }
 
 TEST(CLI, parsePositionalThrowIfNonExisting) {
@@ -228,7 +228,7 @@ TEST(CLI, helpWithOptions) {
 TEST(CLI, helpWithCommands) {
     yeschief::CLI cli("cli", "description");
     CommandStub command("my-command");
-    cli.addCommand(command);
+    cli.addCommand(&command);
     std::stringstream ss;
     cli.help(ss);
     const std::string result(std::istreambuf_iterator<char>(ss), {});
@@ -386,7 +386,7 @@ TEST(CLI, runReturnsResultIfImplicitOptionWithoutValue) {
 TEST(CLI, runReturnsEmptyWhenNoCommands) {
     yeschief::CLI cli("name", "description");
     CommandStub command("my-command");
-    cli.addCommand(command);
+    cli.addCommand(&command);
     const auto result = cli.run(1, toStringArray({"name"}).data());
     ASSERT_TRUE(result);
 }
@@ -394,7 +394,7 @@ TEST(CLI, runReturnsEmptyWhenNoCommands) {
 TEST(CLI, runReturnsFaultWhenCommandDoNotExists) {
     yeschief::CLI cli("name", "description");
     CommandStub command("my-command");
-    cli.addCommand(command);
+    cli.addCommand(&command);
     const auto result = cli.run(2, toStringArray({"name", "help"}).data());
     ASSERT_FALSE(result);
     ASSERT_EQ(yeschief::FaultType::UnknownCommand, result.error().type);
@@ -403,14 +403,14 @@ TEST(CLI, runReturnsFaultWhenCommandDoNotExists) {
 TEST(CLI, runReturnsResultWhenCommand) {
     yeschief::CLI cli("name", "description");
     CommandStub command("my-command");
-    cli.addCommand(command);
+    cli.addCommand(&command);
     ASSERT_EXIT(cli.run(2, toStringArray({"name", "my-command"}).data()), ExitedWithCode(0), ".*");
 }
 
 TEST(CLI, runReturnsFaultWhenCommandWithBadArgs) {
     yeschief::CLI cli("name", "description");
     CommandStub command("my-command");
-    cli.addCommand(command);
+    cli.addCommand(&command);
     const auto result = cli.run(3, toStringArray({"name", "my-command", "--foo"}).data());
     ASSERT_FALSE(result);
     ASSERT_EQ(yeschief::FaultType::UnrecognizedOption, result.error().type);
@@ -419,6 +419,6 @@ TEST(CLI, runReturnsFaultWhenCommandWithBadArgs) {
 TEST(CLI, runReturnsResultWhenCommandWithArgs) {
     yeschief::CLI cli("name", "description");
     CommandStub command("my-command");
-    cli.addCommand(command);
+    cli.addCommand(&command);
     ASSERT_EXIT(cli.run(3, toStringArray({"name", "my-command", "--exit=12"}).data()), ExitedWithCode(12), ".*");
 }
