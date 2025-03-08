@@ -50,21 +50,21 @@ auto CLI::addGroup(const std::string &name) -> OptionGroup & {
     return _groups.at(name);
 }
 
-auto CLI::addCommand(Command &command) -> CLI & {
+auto CLI::addCommand(Command *command) -> CLI & {
     if (_mode.has_value() && _mode.value() == OPTIONS) {
         throw std::logic_error("Cannot add a command to a cli using options");
     }
     _mode = COMMANDS;
 
-    const auto name = command.getName();
+    const auto name = command->getName();
     if (_commands.contains(name)) {
         throw std::logic_error("Command '" + name + "' already exists");
     }
 
-    CLI command_cli(name, command.getDescription());
-    command.setup(command_cli);
+    CLI command_cli(name, command->getDescription());
+    command->setup(command_cli);
 
-    _commands.insert(std::make_pair(name, &command));
+    _commands.insert(std::make_pair(name, command));
     _commands_cli.insert(std::make_pair(name, command_cli));
 
     return *this;
