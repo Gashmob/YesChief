@@ -46,7 +46,7 @@ jobs:
       - name: Archive package
         uses: actions/upload-artifact@4cec3d8aa04e39d1a68397de0c4cd6fb9dce8ec1 # v4.6.1
         with:
-          name: filc-${{ needs.metadata.outputs.version }}_deb
+          name: yeschief-${{ needs.metadata.outputs.version }}_deb
           path: |
             ${{ github.workspace }}/out/deb_package/*.deb
             ${{ github.workspace }}/out/deb_package/*.deb.sha512
@@ -74,7 +74,7 @@ jobs:
       - name: Archive package
         uses: actions/upload-artifact@4cec3d8aa04e39d1a68397de0c4cd6fb9dce8ec1 # v4.6.1
         with:
-          name: filc-${{ needs.metadata.outputs.version }}_rpm
+          name: yeschief-${{ needs.metadata.outputs.version }}_rpm
           path: |
             ${{ github.workspace }}/out/rpm_package/*.rpm
             ${{ github.workspace }}/out/rpm_package/*.rpm.sha512
