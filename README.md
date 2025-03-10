@@ -11,6 +11,8 @@ You can retrieve rpm/deb package attached to [latest release](https://github.com
 
 Devel packages are also build for each push to master branch in [package workflow](https://github.com/Gashmob/YesChief/actions/workflows/package.yml?query=branch%3Amaster).
 
+A nix package version is also available under [tools/nix/yeschief.nix](https://github.com/Gashmob/YesChief/blob/master/tools/nix/yeschief.nix).
+
 For CMake based projects, you can simply use `FetchContent` this way:
 
 ```cmake

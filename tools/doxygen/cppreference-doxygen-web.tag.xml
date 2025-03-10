@@ -45,5 +45,11 @@
             <anchorfile>cpp/io/cout</anchorfile>
             <anchor></anchor>
         </member>
+        <member kind="function">
+            <type>T</type>
+            <name>vector</name>
+            <anchorfile>cpp/container/vector</anchorfile>
+            <anchor></anchor>
+        </member>
     </compound>
 </tagfile>

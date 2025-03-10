@@ -50,7 +50,7 @@ class CLIResults;
 /**
  * Advanced configuration of an option
  */
-typedef struct {
+typedef struct OptionConfiguration {
     /**
      * Set to `true` if the option is mandatory. Default to `false`
      *
@@ -104,7 +104,7 @@ typedef enum {
 /**
  * Wrapper around an exception message
  */
-typedef struct {
+typedef struct Fault {
     /**
      * The message of the exception. Can be useful for the user to understand what is wrong
      */
