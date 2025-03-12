@@ -1,5 +1,9 @@
 # Changelog
 
+## v1.1.0
+
+*In development*
+
 ## v1.0.0
 
 *2025-03-10*
