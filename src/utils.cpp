@@ -135,6 +135,44 @@ auto yeschief::parseArgv(const int argc, char **argv, const std::vector<std::str
                 option_order.push_back(option);
             }
 
+            else if (std::regex_match(argument, match, std::regex("^-([^=-]+)(=[^=]+)?$"))) {
+                if (! positional_arguments.empty()) {
+                    return std::unexpected<Fault>({
+                      .message = "Unrecognized option: " + positional_arguments[0],
+                      .type    = UnrecognizedOption,
+                    });
+                }
+
+                const std::string options = match[1];
+                for (const char option_char : options) {
+                    if (current_option.has_value()) {
+                        raw_results.at(current_option.value()).emplace_back("true");
+                    }
+
+                    const auto option = std::string(1, option_char);
+                    if (! inArray(allowed_options, option)) {
+                        return std::unexpected<Fault>({
+                          .message = "Unrecognized option: " + option,
+                          .type    = UnrecognizedOption,
+                        });
+                    }
+                    current_option = option;
+                    if (! raw_results.contains(option)) {
+                        raw_results.insert(std::make_pair(option, std::vector<std::string>()));
+                    }
+                    option_order.push_back(option);
+                }
+
+                if (match[2].matched) {
+                    std::string value = match[2].str().substr(1);
+                    if (std::smatch value_match; std::regex_match(value, value_match, std::regex("^(['\"])(.*)\\1$"))) {
+                        value = value_match[2];
+                    }
+                    raw_results.at(current_option.value()).push_back(value);
+                    current_option = std::nullopt;
+                }
+            }
+
             else if (argument == "--") {
                 if (current_option.has_value()) {
                     raw_results.at(current_option.value()).emplace_back("true");
