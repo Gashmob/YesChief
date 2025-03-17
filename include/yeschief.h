@@ -74,7 +74,7 @@ typedef struct OptionConfiguration {
 /**
  * Different types of Fault, ease the treatment of Faults
  */
-typedef enum {
+enum class FaultType {
     /**
      * Has received bad arguments. Mostly a dev error and not a user one
      */
@@ -99,7 +99,7 @@ typedef enum {
      * Command not found
      */
     UnknownCommand,
-} FaultType;
+};
 
 /**
  * Wrapper around an exception message
@@ -201,7 +201,7 @@ class CLI final {
     friend class OptionGroup;
     friend class HelpCommand;
 
-    enum Mode { OPTIONS, COMMANDS };
+    enum class Mode { OPTIONS, COMMANDS };
 
   public:
     /**
@@ -457,10 +457,10 @@ auto yeschief::CLI::addOption(
     const std::string &group_name,
     const OptionConfiguration &configuration
 ) -> CLI & {
-    if (_mode.has_value() && _mode.value() == COMMANDS) {
+    if (_mode.has_value() && _mode.value() == Mode::COMMANDS) {
         throw std::logic_error("Cannot add an option group to a cli using commands");
     }
-    _mode = OPTIONS;
+    _mode = Mode::OPTIONS;
 
     if (_options.contains(name)) {
         throw std::logic_error("CLI has already an option '" + name + "'");

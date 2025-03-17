@@ -79,7 +79,7 @@ auto yeschief::parseArgv(const int argc, char **argv, const std::vector<std::str
                 if (! positional_arguments.empty()) {
                     return std::unexpected<Fault>({
                       .message = "Unrecognized option: " + positional_arguments[0],
-                      .type    = UnrecognizedOption,
+                      .type    = FaultType::UnrecognizedOption,
                     });
                 }
 
@@ -91,7 +91,7 @@ auto yeschief::parseArgv(const int argc, char **argv, const std::vector<std::str
                 if (! inArray(allowed_options, option)) {
                     return std::unexpected<Fault>({
                       .message = "Unrecognized option: " + option,
-                      .type    = UnrecognizedOption,
+                      .type    = FaultType::UnrecognizedOption,
                     });
                 }
                 if (! raw_results.contains(option)) {
@@ -113,7 +113,7 @@ auto yeschief::parseArgv(const int argc, char **argv, const std::vector<std::str
                 if (! positional_arguments.empty()) {
                     return std::unexpected<Fault>({
                       .message = "Unrecognized option: " + positional_arguments[0],
-                      .type    = UnrecognizedOption,
+                      .type    = FaultType::UnrecognizedOption,
                     });
                 }
 
@@ -125,7 +125,7 @@ auto yeschief::parseArgv(const int argc, char **argv, const std::vector<std::str
                 if (! inArray(allowed_options, option)) {
                     return std::unexpected<Fault>({
                       .message = "Unrecognized option: " + option,
-                      .type    = UnrecognizedOption,
+                      .type    = FaultType::UnrecognizedOption,
                     });
                 }
                 current_option = option;
@@ -139,7 +139,7 @@ auto yeschief::parseArgv(const int argc, char **argv, const std::vector<std::str
                 if (! positional_arguments.empty()) {
                     return std::unexpected<Fault>({
                       .message = "Unrecognized option: " + positional_arguments[0],
-                      .type    = UnrecognizedOption,
+                      .type    = FaultType::UnrecognizedOption,
                     });
                 }
 
@@ -153,7 +153,7 @@ auto yeschief::parseArgv(const int argc, char **argv, const std::vector<std::str
                     if (! inArray(allowed_options, option)) {
                         return std::unexpected<Fault>({
                           .message = "Unrecognized option: " + option,
-                          .type    = UnrecognizedOption,
+                          .type    = FaultType::UnrecognizedOption,
                         });
                     }
                     current_option = option;
@@ -216,7 +216,7 @@ auto yeschief::toBoolean(const std::string &value) -> std::expected<bool, Fault>
     }
     return std::unexpected<Fault>({
       .message = "'" + value + "' cannot be parsed to a boolean value",
-      .type    = InvalidOptionType,
+      .type    = FaultType::InvalidOptionType,
     });
 }
 
@@ -226,7 +226,7 @@ auto yeschief::toInt(const std::string &value) -> std::expected<int, Fault> {
     }
     return std::unexpected<Fault>({
       .message = "'" + value + "' cannot be parsed to an int value",
-      .type    = InvalidOptionType,
+      .type    = FaultType::InvalidOptionType,
     });
 }
 
@@ -236,7 +236,7 @@ auto yeschief::toFloat(const std::string &value) -> std::expected<float, Fault> 
     }
     return std::unexpected<Fault>({
       .message = "'" + value + "' cannot be parsed to an int value",
-      .type    = InvalidOptionType,
+      .type    = FaultType::InvalidOptionType,
     });
 }
 
@@ -246,7 +246,7 @@ auto yeschief::toDouble(const std::string &value) -> std::expected<double, Fault
     }
     return std::unexpected<Fault>({
       .message = "'" + value + "' cannot be parsed to an int value",
-      .type    = InvalidOptionType,
+      .type    = FaultType::InvalidOptionType,
     });
 }
 

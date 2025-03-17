@@ -37,10 +37,10 @@ CLI::CLI(std::string name, std::string description)
 }
 
 auto CLI::addGroup(const std::string &name) -> OptionGroup & {
-    if (_mode.has_value() && _mode.value() == COMMANDS) {
+    if (_mode.has_value() && _mode.value() == Mode::COMMANDS) {
         throw std::logic_error("Cannot add an option group to a cli using commands");
     }
-    _mode = OPTIONS;
+    _mode = Mode::OPTIONS;
 
     if (_groups.contains(name)) {
         throw std::logic_error("Group '" + name + "' already exists");
@@ -51,10 +51,10 @@ auto CLI::addGroup(const std::string &name) -> OptionGroup & {
 }
 
 auto CLI::addCommand(Command *command) -> CLI & {
-    if (_mode.has_value() && _mode.value() == OPTIONS) {
+    if (_mode.has_value() && _mode.value() == Mode::OPTIONS) {
         throw std::logic_error("Cannot add a command to a cli using options");
     }
-    _mode = COMMANDS;
+    _mode = Mode::COMMANDS;
 
     const auto name = command->getName();
     if (_commands.contains(name)) {
@@ -74,11 +74,11 @@ auto CLI::run(const int argc, char **argv) const -> std::expected<CLIResults, Fa
     if (argc < 1) {
         return std::unexpected<Fault>({
           .message = "argc cannot be less than 1, argv should at least contains executable name",
-          .type    = InvalidArgs,
+          .type    = FaultType::InvalidArgs,
         });
     }
 
-    if (_mode.has_value() && _mode.value() == COMMANDS) {
+    if (_mode.has_value() && _mode.value() == Mode::COMMANDS) {
         auto count     = argc - 1;
         auto arguments = argv + 1;
         if (count == 0) {
@@ -90,7 +90,7 @@ auto CLI::run(const int argc, char **argv) const -> std::expected<CLIResults, Fa
         if (! _commands.contains(command_name)) {
             return std::unexpected<Fault>({
               .message = "Command '" + command_name + "' not found",
-              .type    = UnknownCommand,
+              .type    = FaultType::UnknownCommand,
             });
         }
         auto command       = _commands.at(command_name);
@@ -118,7 +118,7 @@ auto CLI::run(const int argc, char **argv) const -> std::expected<CLIResults, Fa
     if (_positional_options.empty() && ! positional_arguments.empty()) {
         return std::unexpected<Fault>({
           .message = "Unrecognized option: " + positional_arguments[0],
-          .type    = UnrecognizedOption,
+          .type    = FaultType::UnrecognizedOption,
         });
     }
     auto positional_index = 0;
@@ -201,7 +201,7 @@ auto CLI::run(const int argc, char **argv) const -> std::expected<CLIResults, Fa
     if (! missing_required.empty()) {
         return std::unexpected<Fault>({
           .message = "Some required options were not given: " + join(missing_required, ", "),
-          .type    = MissingRequiredOption,
+          .type    = FaultType::MissingRequiredOption,
         });
     }
 
@@ -228,7 +228,7 @@ auto CLI::getValueForOption(const std::shared_ptr<Option> &option, const std::ve
         } else {
             return std::unexpected<Fault>({
               .message = "Option '" + option->getName() + "' needs a value",
-              .type    = MissingOptionValue,
+              .type    = FaultType::MissingOptionValue,
             });
         }
     }
@@ -309,7 +309,7 @@ auto CLI::help(std::ostream &out) const -> void {
         << _description << "\n"
         << "\n";
 
-    if (_mode.has_value() && _mode.value() == COMMANDS) {
+    if (_mode.has_value() && _mode.value() == Mode::COMMANDS) {
         out << "Commands:\n"
             << "\n";
 
@@ -343,7 +343,7 @@ auto CLI::help(std::ostream &out) const -> void {
 auto CLI::buildUsageHelp() const -> std::string {
     auto usage = _name;
 
-    if (_mode.has_value() && _mode.value() == COMMANDS) {
+    if (_mode.has_value() && _mode.value() == Mode::COMMANDS) {
         usage += " [COMMAND] [OPTIONS]";
     } else {
         if (! _options.empty()) {
