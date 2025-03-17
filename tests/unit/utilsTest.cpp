@@ -205,6 +205,26 @@ TEST(utils, parseArgvExplicitPositionalArguments) {
     );
 }
 
+TEST(utils, parseArgvConcatenatedShort) {
+    const auto results = yeschief::parseArgv(1, toStringArray({"-abc"}).data(), {"a", "b", "c"}).value();
+    ASSERT_THAT(
+        results.raw_results,
+        ElementsAre(Pair("a", ElementsAre("true")), Pair("b", ElementsAre("true")), Pair("c", ElementsAre("true")))
+    );
+    ASSERT_THAT(results.option_order, ElementsAre("a", "b", "c"));
+}
+
+TEST(utils, parseArgvConcatenatedShortWithValue) {
+    ASSERT_THAT(
+        yeschief::parseArgv(1, toStringArray({"-abc=3"}).data(), {"a", "b", "c"}).value().raw_results,
+        ElementsAre(Pair("a", ElementsAre("true")), Pair("b", ElementsAre("true")), Pair("c", ElementsAre("3")))
+    );
+    ASSERT_THAT(
+        yeschief::parseArgv(2, toStringArray({"-abc", "3"}).data(), {"a", "b", "c"}).value().raw_results,
+        ElementsAre(Pair("a", ElementsAre("true")), Pair("b", ElementsAre("true")), Pair("c", ElementsAre("3")))
+    );
+}
+
 TEST(utils, toBoolean) {
     ASSERT_TRUE(yeschief::toBoolean("true").value());
     ASSERT_TRUE(yeschief::toBoolean("1").value());
