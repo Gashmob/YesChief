@@ -26,7 +26,7 @@ FetchContent_GetProperties(yeschief)
 if(NOT yeschief_POPULATED)
     message(STATUS "Fetching yeschief...")
     FetchContent_Populate(yeschief)
-    add_subdirectory(${yeschief_SOURCE_DIR} ${yeschief_BINARY_DIR})
+    add_subdirectory(${yeschief_SOURCE_DIR})
 endif()
 
 target_link_libraries(my_target PUBLIC yeschief)
