@@ -151,9 +151,11 @@ auto CLI::run(const int argc, char **argv) const -> std::expected<CLIResults, Fa
     }
 
     for (const auto &option : _options | std::ranges::views::values) {
-        if (raw_results.contains(option->name) && raw_results.contains(option->short_name)) {
-            auto long_values_it  = raw_results.at(option->name).begin();
-            auto short_values_it = raw_results.at(option->short_name).begin();
+        const auto long_raw_values  = raw_results.find(option->name);
+        const auto short_raw_values = raw_results.find(option->short_name);
+        if (long_raw_values != raw_results.end() && short_raw_values != raw_results.end()) {
+            auto long_values_it  = long_raw_values->second.begin();
+            auto short_values_it = short_raw_values->second.begin();
             std::vector<std::string> values;
             // Assert that long_values.length + short_values.length === option_orders of (-n, --name).
             // If it is not the case it means there is a bug in parseArgv and it should be fixed
@@ -171,7 +173,7 @@ auto CLI::run(const int argc, char **argv) const -> std::expected<CLIResults, Fa
             option_values.emplace(option->name, value.value());
         }
 
-        else if (raw_results.contains(option->name)) {
+        else if (long_raw_values != raw_results.end()) {
             auto values = raw_results.at(option->name);
             auto value  = getValueForOption(option, values);
             if (! value.has_value()) {
@@ -180,7 +182,7 @@ auto CLI::run(const int argc, char **argv) const -> std::expected<CLIResults, Fa
             option_values.emplace(option->name, value.value());
         }
 
-        else if (raw_results.contains(option->short_name)) {
+        else if (short_raw_values != raw_results.end()) {
             auto values = raw_results.at(option->short_name);
             auto value  = getValueForOption(option, values);
             if (! value.has_value()) {

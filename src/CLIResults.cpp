@@ -28,9 +28,10 @@ using namespace yeschief;
 CLIResults::CLIResults(const std::map<std::string, std::any> &values): _values(values) {}
 
 auto CLIResults::get(const std::string &option) const -> std::optional<std::any> {
-    if (! _values.contains(option)) {
+    const auto value = _values.find(option);
+    if (value == _values.end()) {
         return std::nullopt;
     }
 
-    return {_values.at(option)};
+    return value->second;
 }

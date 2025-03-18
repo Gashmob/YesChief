@@ -34,8 +34,9 @@ auto HelpCommand::run(const CLIResults &results) -> int {
     const auto command_option = results.get("command");
     if (command_option.has_value()) {
         const auto command_name = std::any_cast<std::string>(command_option.value());
-        if (_cli->_commands_cli.contains(command_name)) {
-            _cli->_commands_cli.at(command_name).help(std::cout);
+        const auto command_cli  = _cli->_commands_cli.find(command_name);
+        if (command_cli != _cli->_commands_cli.end()) {
+            command_cli->second.help(std::cout);
             return 0;
         }
 
