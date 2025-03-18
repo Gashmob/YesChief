@@ -42,7 +42,6 @@
 
 namespace yeschief {
 class CLI;
-class Option;
 class OptionGroup;
 class Command;
 class CLIResults;
@@ -118,39 +117,27 @@ typedef struct Fault {
 /**
  * An option, nothing else
  */
-class Option final {
-  public:
+struct Option {
     /**
-     * @param name Name of the option (`--name`)
-     * @param short_name Short name of the option (`-n`)
-     * @param description What is does?
-     * @param type Type of the option (bool,int,...)
-     * @param configuration Advanced configuration of the option
+     * Name of the option (`--name`)
      */
-    Option(
-        const std::string &name,
-        const std::string &short_name,
-        const std::string &description,
-        const std::type_info &type,
-        const OptionConfiguration &configuration
-    );
-
-    [[nodiscard]] auto getName() const -> std::string;
-
-    [[nodiscard]] auto getShortName() const -> std::string;
-
-    [[nodiscard]] auto getDescription() const -> std::string;
-
-    [[nodiscard]] auto getType() const -> const std::type_info &;
-
-    [[nodiscard]] auto getConfiguration() const -> OptionConfiguration;
-
-  private:
-    const std::string _name;
-    const std::string _short_name;
-    const std::string _description;
-    const std::type_info &_type;
-    const OptionConfiguration _configuration;
+    std::string name;
+    /**
+     * Short name of the option (`-n`)
+     */
+    std::string short_name;
+    /**
+     * What id does?
+     */
+    std::string description;
+    /**
+     * Type of the option (bool,int,...)
+     */
+    const std::type_info &type;
+    /**
+     * Advanced configuration of the option
+     */
+    OptionConfiguration configuration;
 };
 
 /**
@@ -189,7 +176,7 @@ class OptionGroup final {
   private:
     CLI *_parent;
     std::string _name;
-    std::vector<std::shared_ptr<Option>> _options;
+    std::vector<std::shared_ptr<const Option>> _options;
 
     auto addOption(const std::shared_ptr<Option> &option) -> void;
 };
@@ -324,7 +311,7 @@ class CLI final {
     std::string _description;
     std::optional<Mode> _mode;
     std::map<std::string, OptionGroup> _groups;
-    std::map<std::string, std::shared_ptr<Option>> _options;
+    std::map<std::string, std::shared_ptr<const Option>> _options;
     std::vector<std::string> _positional_options;
     std::map<std::string, Command *> _commands;
     std::map<std::string, CLI> _commands_cli;
@@ -333,12 +320,12 @@ class CLI final {
 
     [[nodiscard]] auto buildPositionalHelp() const -> std::string;
 
-    [[nodiscard]] static auto buildOptionUsageHelp(const std::shared_ptr<Option> &option) -> std::string;
+    [[nodiscard]] static auto buildOptionUsageHelp(const std::shared_ptr<const Option> &option) -> std::string;
 
     static auto checkOptionType(const std::type_info &type) -> void;
 
     [[nodiscard]] static auto
-    getValueForOption(const std::shared_ptr<Option> &option, const std::vector<std::string> &values)
+    getValueForOption(const std::shared_ptr<const Option> &option, const std::vector<std::string> &values)
         -> std::expected<std::any, Fault>;
 
     template<typename T = bool>
@@ -482,8 +469,9 @@ auto yeschief::CLI::addOption(
         }
     }
 
-    checkOptionType(typeid(T));
-    auto option = std::make_shared<Option>(long_name, short_name, description, typeid(T), configuration);
+    const auto &type_info = typeid(T);
+    checkOptionType(type_info);
+    const auto option = std::make_shared<Option>(long_name, short_name, description, type_info, configuration);
     _options.insert(std::make_pair(long_name, option));
     _groups.at(group_name).addOption(option);
 
@@ -499,12 +487,12 @@ auto yeschief::CLI::parsePositional(const std::string &option_name, Tail &&...op
     if (! _positional_options.empty()) {
         const auto last_option_name  = _positional_options[_positional_options.size() - 1];
         const auto last_option       = _options.at(last_option_name);
-        const auto &last_option_type = last_option->getType();
+        const auto &last_option_type = last_option->type;
         if (last_option_type == typeid(std::vector<int>) || last_option_type == typeid(std::vector<float>)
             || last_option_type == typeid(std::vector<double>)) {
             throw std::logic_error("Cannot add a new positional argument after one with a list type");
         }
-        if (option->getConfiguration().required && ! last_option->getConfiguration().required) {
+        if (option->configuration.required && ! last_option->configuration.required) {
             throw std::logic_error(
                 "Option '" + option_name + "' is required but is placed after a non required one '" + last_option_name
                 + "'"
