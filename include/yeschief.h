@@ -353,7 +353,9 @@ class Command {
     /**
      * @return Description of the command
      */
-    [[nodiscard]] virtual auto getDescription() const -> std::string;
+    [[nodiscard]] virtual auto getDescription() const -> std::string {
+        return "";
+    }
     /**
      * Configure options or sub-commands of the current command.
      *
@@ -361,7 +363,7 @@ class Command {
      *
      * @param cli The sub CLI of the command
      */
-    virtual auto setup(CLI &cli) -> void;
+    virtual auto setup(CLI &cli) -> void {}
 
     /**
      * Parse argv against configuration of the command and pass the result to this method.
@@ -407,11 +409,16 @@ class CLIResults final {
  */
 class HelpCommand final : public Command {
   public:
-    explicit HelpCommand(CLI *cli);
+    explicit HelpCommand(CLI *cli): _cli(cli) {}
 
-    [[nodiscard]] auto getName() const -> std::string override;
+    [[nodiscard]] auto getName() const -> std::string override {
+        return "help";
+    }
 
-    [[nodiscard]] auto getDescription() const -> std::string override;
+    [[nodiscard]] auto getDescription() const -> std::string override {
+        return "Display this help message\n"
+               "When COMMAND is given, display help for this command";
+    }
 
     auto setup(CLI &cli) -> void override;
 
