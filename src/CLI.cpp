@@ -104,8 +104,8 @@ auto CLI::run(const int argc, char **argv) const -> std::expected<CLIResults, Fa
 
     std::vector<std::string> allowed_options;
     for (const auto &option : _options | std::ranges::views::values) {
-        allowed_options.push_back(option->getName());
-        allowed_options.push_back(option->getShortName());
+        allowed_options.push_back(option->name);
+        allowed_options.push_back(option->short_name);
     }
     const auto parse_results_expect = parseArgv(argc - 1, argv + 1, allowed_options);
     if (! parse_results_expect.has_value()) {
@@ -127,8 +127,8 @@ auto CLI::run(const int argc, char **argv) const -> std::expected<CLIResults, Fa
             break;
         }
 
-        const auto &option      = _options.at(option_name);
-        const auto &option_type = option->getType();
+        const auto option       = _options.at(option_name);
+        const auto &option_type = option->type;
 
         if (option_type == typeid(std::vector<int>) || option_type == typeid(std::vector<float>)
             || option_type == typeid(std::vector<double>)) {
@@ -151,16 +151,16 @@ auto CLI::run(const int argc, char **argv) const -> std::expected<CLIResults, Fa
     }
 
     for (const auto &option : _options | std::ranges::views::values) {
-        if (raw_results.contains(option->getName()) && raw_results.contains(option->getShortName())) {
-            auto long_values_it  = raw_results.at(option->getName()).begin();
-            auto short_values_it = raw_results.at(option->getShortName()).begin();
+        if (raw_results.contains(option->name) && raw_results.contains(option->short_name)) {
+            auto long_values_it  = raw_results.at(option->name).begin();
+            auto short_values_it = raw_results.at(option->short_name).begin();
             std::vector<std::string> values;
             // Assert that long_values.length + short_values.length === option_orders of (-n, --name).
             // If it is not the case it means there is a bug in parseArgv and it should be fixed
             for (const auto &oo : option_order) {
-                if (oo == option->getName()) {
+                if (oo == option->name) {
                     values.push_back(*long_values_it++);
-                } else if (oo == option->getShortName()) {
+                } else if (oo == option->short_name) {
                     values.push_back(*short_values_it++);
                 }
             }
@@ -168,33 +168,33 @@ auto CLI::run(const int argc, char **argv) const -> std::expected<CLIResults, Fa
             if (! value.has_value()) {
                 return std::unexpected(value.error());
             }
-            option_values.insert(std::make_pair(option->getName(), value.value()));
+            option_values.insert(std::make_pair(option->name, value.value()));
         }
 
-        else if (raw_results.contains(option->getName())) {
-            auto values = raw_results.at(option->getName());
+        else if (raw_results.contains(option->name)) {
+            auto values = raw_results.at(option->name);
             auto value  = getValueForOption(option, values);
             if (! value.has_value()) {
                 return std::unexpected(value.error());
             }
-            option_values.insert(std::make_pair(option->getName(), value.value()));
+            option_values.insert(std::make_pair(option->name, value.value()));
         }
 
-        else if (raw_results.contains(option->getShortName())) {
-            auto values = raw_results.at(option->getShortName());
+        else if (raw_results.contains(option->short_name)) {
+            auto values = raw_results.at(option->short_name);
             auto value  = getValueForOption(option, values);
             if (! value.has_value()) {
                 return std::unexpected(value.error());
             }
-            option_values.insert(std::make_pair(option->getName(), value.value()));
+            option_values.insert(std::make_pair(option->name, value.value()));
         }
 
-        else if (option->getConfiguration().default_value.has_value()) {
-            option_values.insert(std::make_pair(option->getName(), option->getConfiguration().default_value.value()));
+        else if (option->configuration.default_value.has_value()) {
+            option_values.insert(std::make_pair(option->name, option->configuration.default_value.value()));
         }
 
-        else if (option->getConfiguration().required && ! option_values.contains(option->getName())) {
-            missing_required.push_back(option->getName());
+        else if (option->configuration.required && ! option_values.contains(option->name)) {
+            missing_required.push_back(option->name);
         }
     }
 
@@ -215,37 +215,37 @@ template<typename T> auto toAny(std::expected<T, Fault> exp) -> std::expected<st
     });
 }
 
-auto CLI::getValueForOption(const std::shared_ptr<Option> &option, const std::vector<std::string> &values)
+auto CLI::getValueForOption(const std::shared_ptr<const Option> &option, const std::vector<std::string> &values)
     -> std::expected<std::any, Fault> {
     const auto last_index = values.size() - 1;
-    if (option->getType() == typeid(bool)) {
+    if (option->type == typeid(bool)) {
         return toAny(toBoolean(values[last_index]));
     }
 
     if (values.size() == 1 && values[0] == "true") {
-        if (option->getConfiguration().implicit_value.has_value()) {
-            return option->getConfiguration().implicit_value.value();
+        if (option->configuration.implicit_value.has_value()) {
+            return option->configuration.implicit_value.value();
         } else {
             return std::unexpected<Fault>({
-              .message = "Option '" + option->getName() + "' needs a value",
+              .message = "Option '" + option->name + "' needs a value",
               .type    = FaultType::MissingOptionValue,
             });
         }
     }
 
-    if (option->getType() == typeid(std::string)) {
+    if (option->type == typeid(std::string)) {
         return values[last_index];
     }
-    if (option->getType() == typeid(int)) {
+    if (option->type == typeid(int)) {
         return toAny(toInt(values[last_index]));
     }
-    if (option->getType() == typeid(float)) {
+    if (option->type == typeid(float)) {
         return toAny(toFloat(values[last_index]));
     }
-    if (option->getType() == typeid(double)) {
+    if (option->type == typeid(double)) {
         return toAny(toDouble(values[last_index]));
     }
-    if (option->getType() == typeid(std::vector<bool>)) {
+    if (option->type == typeid(std::vector<bool>)) {
         std::vector<bool> bool_results;
         bool_results.reserve(values.size());
         for (const auto &string_value : values) {
@@ -257,10 +257,10 @@ auto CLI::getValueForOption(const std::shared_ptr<Option> &option, const std::ve
         }
         return bool_results;
     }
-    if (option->getType() == typeid(std::vector<std::string>)) {
+    if (option->type == typeid(std::vector<std::string>)) {
         return values;
     }
-    if (option->getType() == typeid(std::vector<int>)) {
+    if (option->type == typeid(std::vector<int>)) {
         std::vector<int> int_results;
         int_results.reserve(values.size());
         for (const auto &string_value : values) {
@@ -272,7 +272,7 @@ auto CLI::getValueForOption(const std::shared_ptr<Option> &option, const std::ve
         }
         return int_results;
     }
-    if (option->getType() == typeid(std::vector<float>)) {
+    if (option->type == typeid(std::vector<float>)) {
         std::vector<float> float_results;
         float_results.reserve(values.size());
         for (const auto &string_value : values) {
@@ -284,7 +284,7 @@ auto CLI::getValueForOption(const std::shared_ptr<Option> &option, const std::ve
         }
         return float_results;
     }
-    if (option->getType() == typeid(std::vector<double>)) {
+    if (option->type == typeid(std::vector<double>)) {
         std::vector<double> double_results;
         double_results.reserve(values.size());
         for (const auto &string_value : values) {
@@ -298,7 +298,7 @@ auto CLI::getValueForOption(const std::shared_ptr<Option> &option, const std::ve
     }
 
     throw std::runtime_error(
-        "Type '" + std::string(option->getType().name()) + "' is not allowed. It should have been caught before"
+        "Type '" + std::string(option->type.name()) + "' is not allowed. It should have been caught before"
     );
 }
 
@@ -331,9 +331,9 @@ auto CLI::help(std::ostream &out) const -> void {
             out << (name.empty() ? "Options" : name) << ":\n"
                 << "\n";
 
-            for (const auto &option : group._options) {
+            for (const auto option : group._options) {
                 out << "\t" << buildOptionUsageHelp(option) << "\n"
-                    << "\t\t" << join(split(option->getDescription(), "\n"), "\n\t\t") << "\n"
+                    << "\t\t" << join(split(option->description, "\n"), "\n\t\t") << "\n"
                     << "\n";
             }
         }
@@ -350,12 +350,12 @@ auto CLI::buildUsageHelp() const -> std::string {
             usage += " [OPTIONS]";
         }
         for (const auto &option : _options | std::ranges::views::values) {
-            if (option->getConfiguration().required && ! inArray(_positional_options, option->getName())) {
-                usage += " --" + option->getName();
+            if (option->configuration.required && ! inArray(_positional_options, option->name)) {
+                usage += " --" + option->name;
             }
         }
         for (const auto &option : _positional_options) {
-            if (_options.at(option)->getConfiguration().required) {
+            if (_options.at(option)->configuration.required) {
                 usage += " " + toUpper(option);
             } else {
                 usage += " [" + toUpper(option) + "]";
@@ -376,11 +376,11 @@ auto CLI::buildPositionalHelp() const -> std::string {
           "\n"
           "\tThese arguments come after options and in the order they are listed here.\n";
 
-    if (_options.at(_positional_options[0])->getConfiguration().required) {
+    if (_options.at(_positional_options[0])->configuration.required) {
         help += "\tOnly ";
         std::vector<std::string> required;
         for (const auto &option : _positional_options) {
-            if (_options.at(option)->getConfiguration().required) {
+            if (_options.at(option)->configuration.required) {
                 required.push_back(toUpper(option));
             } else {
                 break;
@@ -397,28 +397,28 @@ auto CLI::buildPositionalHelp() const -> std::string {
     for (const auto &option_name : _positional_options) {
         help += "\t" + toUpper(option_name);
         const auto option = _options.at(option_name);
-        if (option->getConfiguration().required) {
+        if (option->configuration.required) {
             help += " [REQUIRED]";
         }
         help += "\n\t\t";
-        help += join(split(option->getDescription(), "\n"), "\n\t\t") + "\n\n";
+        help += join(split(option->description, "\n"), "\n\t\t") + "\n\n";
     }
 
     return help;
 }
 
-auto CLI::buildOptionUsageHelp(const std::shared_ptr<Option> &option) -> std::string {
-    auto usage = "--" + option->getName();
-    if (option->getType() != typeid(bool)) {
-        usage += " " + option->getConfiguration().value_help;
+auto CLI::buildOptionUsageHelp(const std::shared_ptr<const Option> &option) -> std::string {
+    auto usage = "--" + option->name;
+    if (option->type != typeid(bool)) {
+        usage += " " + option->configuration.value_help;
     }
-    if (! option->getShortName().empty()) {
-        usage += ", -" + option->getShortName();
-        if (option->getType() != typeid(bool)) {
-            usage += " " + option->getConfiguration().value_help;
+    if (! option->short_name.empty()) {
+        usage += ", -" + option->short_name;
+        if (option->type != typeid(bool)) {
+            usage += " " + option->configuration.value_help;
         }
     }
-    if (option->getConfiguration().required) {
+    if (option->configuration.required) {
         usage += " [REQUIRED]";
     }
 
