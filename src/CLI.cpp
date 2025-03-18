@@ -46,8 +46,7 @@ auto CLI::addGroup(const std::string &name) -> OptionGroup & {
         throw std::logic_error("Group '" + name + "' already exists");
     }
 
-    _groups.emplace(name, OptionGroup(this, name));
-    return _groups.at(name);
+    return _groups.emplace(name, OptionGroup(this, name)).first->second;
 }
 
 auto CLI::addCommand(Command *command) -> CLI & {
