@@ -25,17 +25,6 @@
 
 using namespace yeschief;
 
-HelpCommand::HelpCommand(CLI *cli): _cli(cli) {}
-
-auto HelpCommand::getName() const -> std::string {
-    return "help";
-}
-
-auto HelpCommand::getDescription() const -> std::string {
-    return "Display this help message\n"
-           "When COMMAND is given, display help for this command";
-}
-
 auto HelpCommand::setup(CLI &cli) -> void {
     cli.addOption<std::string>("command", "Display help of this command");
     cli.parsePositional("command");
