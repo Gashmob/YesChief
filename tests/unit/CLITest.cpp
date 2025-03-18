@@ -169,32 +169,27 @@ TEST(CLI, parsePositional) {
 TEST(CLI, helpWithoutOptions) {
     const auto cli = yeschief::CLI(
         "my-program",
-        "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Etiam volutpat vitae felis id ornare. Etiam ac\n"
-        "sollicitudin arcu. Morbi aliquet mauris varius vestibulum gravida. Mauris quis laoreet lectus. Sed sit amet\n"
-        "pharetra tellus. Duis sed egestas dolor. Suspendisse potenti. Proin maximus efficitur tincidunt. "
-        "Pellentesque\n"
-        "eu sodales dui. Vestibulum hendrerit finibus tortor, accumsan tincidunt urna maximus feugiat. Vivamus "
-        "rhoncus\n"
-        "felis lacus, at ultricies ante consequat vitae. Mauris eu dignissim ex, at malesuada dui. Mauris sagittis\n"
-        "mattis accumsan."
+        R"(Lorem ipsum dolor sit amet, consectetur adipiscing elit. Etiam volutpat vitae felis id ornare. Etiam ac
+sollicitudin arcu. Morbi aliquet mauris varius vestibulum gravida. Mauris quis laoreet lectus. Sed sit amet
+pharetra tellus. Duis sed egestas dolor. Suspendisse potenti. Proin maximus efficitur tincidunt. Pellentesque
+eu sodales dui. Vestibulum hendrerit finibus tortor, accumsan tincidunt urna maximus feugiat. Vivamus rhoncus
+felis lacus, at ultricies ante consequat vitae. Mauris eu dignissim ex, at malesuada dui. Mauris sagittis mattis accumsan.)"
     );
     std::stringstream ss;
     cli.help(ss);
     const std::string result(std::istreambuf_iterator<char>(ss), {});
 
     ASSERT_STREQ(
-        "usage:\n"
-        "\tmy-program\n"
-        "\n"
-        "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Etiam volutpat vitae felis id ornare. Etiam ac\n"
-        "sollicitudin arcu. Morbi aliquet mauris varius vestibulum gravida. Mauris quis laoreet lectus. Sed sit amet\n"
-        "pharetra tellus. Duis sed egestas dolor. Suspendisse potenti. Proin maximus efficitur tincidunt. "
-        "Pellentesque\n"
-        "eu sodales dui. Vestibulum hendrerit finibus tortor, accumsan tincidunt urna maximus feugiat. Vivamus "
-        "rhoncus\n"
-        "felis lacus, at ultricies ante consequat vitae. Mauris eu dignissim ex, at malesuada dui. Mauris sagittis\n"
-        "mattis accumsan.\n"
-        "\n",
+        R"(usage:
+  my-program
+
+Lorem ipsum dolor sit amet, consectetur adipiscing elit. Etiam volutpat vitae felis id ornare. Etiam ac
+sollicitudin arcu. Morbi aliquet mauris varius vestibulum gravida. Mauris quis laoreet lectus. Sed sit amet
+pharetra tellus. Duis sed egestas dolor. Suspendisse potenti. Proin maximus efficitur tincidunt. Pellentesque
+eu sodales dui. Vestibulum hendrerit finibus tortor, accumsan tincidunt urna maximus feugiat. Vivamus rhoncus
+felis lacus, at ultricies ante consequat vitae. Mauris eu dignissim ex, at malesuada dui. Mauris sagittis mattis accumsan.
+
+)",
         result.c_str()
     );
 }
@@ -211,42 +206,43 @@ TEST(CLI, helpWithOptions) {
     const std::string result(std::istreambuf_iterator<char>(ss), {});
 
     ASSERT_STREQ(
-        "usage:\n"
-        "\tcli [OPTIONS] --name CHARACTER [NUMBER]\n"
-        "\n"
-        "description\n"
-        "\n"
-        "Positional arguments:\n"
-        "\n"
-        "\tThese arguments come after options and in the order they are listed here.\n"
-        "\tOnly CHARACTER is required.\n"
-        "\n"
-        "\tCHARACTER [REQUIRED]\n"
-        "\t\tA character\n"
-        "\n"
-        "\tNUMBER\n"
-        "\t\tA number\n"
-        "\n"
-        "Options:\n"
-        "\n"
-        "\t--name VALUE, -n VALUE [REQUIRED]\n"
-        "\t\tMy option\n"
-        "\n"
-        "\t--help\n"
-        "\t\tMultiline\n"
-        "\t\thelp message\n"
-        "\n"
-        "\t--number <n>\n"
-        "\t\tA number\n"
-        "\n"
-        "\t--character VALUE [REQUIRED]\n"
-        "\t\tA character\n"
-        "\n"
-        "Special:\n"
-        "\n"
-        "\t--rand\n"
-        "\t\tDisplay a random number\n"
-        "\n",
+        R"(usage:
+  cli [OPTIONS] --name CHARACTER [NUMBER]
+
+description
+
+Positional arguments:
+
+  These arguments come after options and in the order they are listed here.
+  Only CHARACTER is required.
+
+  CHARACTER [REQUIRED]
+    A character
+
+  NUMBER
+    A number
+
+Options:
+
+  --name VALUE, -n VALUE [REQUIRED]
+    My option
+
+  --help
+    Multiline
+    help message
+
+  --number <n>
+    A number
+
+  --character VALUE [REQUIRED]
+    A character
+
+Special:
+
+  --rand
+    Display a random number
+
+)",
         result.c_str()
     );
 }
@@ -260,17 +256,18 @@ TEST(CLI, helpWithCommands) {
     const std::string result(std::istreambuf_iterator<char>(ss), {});
 
     ASSERT_STREQ(
-        "usage:\n"
-        "\tcli [COMMAND] [OPTIONS]\n"
-        "\n"
-        "description\n"
-        "\n"
-        "Commands:\n"
-        "\n"
-        "\tmy-command [OPTIONS]\n"
-        "\t\tStub class for Command.\n"
-        "\t\tDescription on another line.\n"
-        "\n",
+        R"(usage:
+  cli [COMMAND] [OPTIONS]
+
+description
+
+Commands:
+
+  my-command [OPTIONS]
+    Stub class for Command.
+    Description on another line.
+
+)",
         result.c_str()
     );
 }

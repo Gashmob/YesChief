@@ -300,20 +300,25 @@ auto CLI::getValueForOption(const std::shared_ptr<const Option> &option, const s
 }
 
 auto CLI::help(std::ostream &out) const -> void {
-    out << "usage:\n"
-        << "\t" << buildUsageHelp() << "\n"
-        << "\n"
-        << _description << "\n"
-        << "\n";
+    out << std::format(
+        R"(usage:
+  {}
+
+{}
+
+)",
+        buildUsageHelp(),
+        _description
+    );
 
     if (_mode.has_value() && _mode.value() == Mode::COMMANDS) {
         out << "Commands:\n"
             << "\n";
 
         for (const auto &command : _commands | std::ranges::views::values) {
-            out << "\t" << _commands_cli.at(command->getName()).buildUsageHelp() << "\n";
+            out << "  " << _commands_cli.at(command->getName()).buildUsageHelp() << "\n";
             if (! command->getDescription().empty()) {
-                out << "\t\t" << join(split(command->getDescription(), "\n"), "\n\t\t") << "\n";
+                out << "    " << join(split(command->getDescription(), "\n"), "\n    ") << "\n";
             }
             out << "\n";
         }
@@ -329,8 +334,8 @@ auto CLI::help(std::ostream &out) const -> void {
                 << "\n";
 
             for (const auto &option : group._options) {
-                out << "\t" << buildOptionUsageHelp(option) << "\n"
-                    << "\t\t" << join(split(option->description, "\n"), "\n\t\t") << "\n"
+                out << "  " << buildOptionUsageHelp(option) << "\n"
+                    << "    " << join(split(option->description, "\n"), "\n    ") << "\n"
                     << "\n";
             }
         }
@@ -371,10 +376,10 @@ auto CLI::buildPositionalHelp() const -> std::string {
     std::string help
         = "Positional arguments:\n"
           "\n"
-          "\tThese arguments come after options and in the order they are listed here.\n";
+          "  These arguments come after options and in the order they are listed here.\n";
 
     if (_options.at(_positional_options[0])->configuration.required) {
-        help += "\tOnly ";
+        help += "  Only ";
         std::vector<std::string> required;
         for (const auto &option : _positional_options) {
             if (_options.at(option)->configuration.required) {
@@ -392,13 +397,13 @@ auto CLI::buildPositionalHelp() const -> std::string {
     }
 
     for (const auto &option_name : _positional_options) {
-        help += "\t" + toUpper(option_name);
+        help += "  " + toUpper(option_name);
         const auto option = _options.at(option_name);
         if (option->configuration.required) {
             help += " [REQUIRED]";
         }
-        help += "\n\t\t";
-        help += join(split(option->description, "\n"), "\n\t\t") + "\n\n";
+        help += "\n    ";
+        help += join(split(option->description, "\n"), "\n    ") + "\n\n";
     }
 
     return help;
