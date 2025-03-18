@@ -41,7 +41,11 @@ TEST(CLI, addOptionWithShortName) {
 
 TEST(CLI, addOptionWithInvalidShortName) {
     yeschief::CLI cli("name", "description");
-    ASSERT_THROW(cli.addOption("name,foo", "My option"), std::logic_error);
+    ASSERT_EXIT(
+        cli.addOption("name,foo", "My option"),
+        KilledBySignal(SIGABRT),
+        HasSubstr("Short name of an option can be only one letter")
+    );
 }
 
 TEST(CLI, addOptionMultiple) {
@@ -52,12 +56,16 @@ TEST(CLI, addOptionMultiple) {
 TEST(CLI, addOptionThrowIfAddExisting) {
     yeschief::CLI cli("name", "description");
     cli.addOption("name", "My option");
-    ASSERT_THROW(cli.addOption("name", "My option"), std::logic_error);
+    ASSERT_EXIT(cli.addOption("name", "My option"), KilledBySignal(SIGABRT), HasSubstr("CLI has already this option"));
 }
 
 TEST(CLI, addOptionThowIfInvalidType) {
     yeschief::CLI cli("name", "description");
-    ASSERT_THROW(cli.addOption<yeschief::Fault>("name", "My option"), std::logic_error);
+    ASSERT_EXIT(
+        cli.addOption<yeschief::Fault>("name", "My option"),
+        KilledBySignal(SIGABRT),
+        HasSubstr("Type is not allowed for options")
+    );
 }
 
 TEST(CLI, addOptionWithType) {
@@ -69,7 +77,11 @@ TEST(CLI, addOptionThrowIfCommandAddedBefore) {
     yeschief::CLI cli("name", "description");
     CommandStub command("");
     cli.addCommand(&command);
-    ASSERT_THROW(cli.addOption("name", "My option"), std::logic_error);
+    ASSERT_EXIT(
+        cli.addOption("name", "My option"),
+        KilledBySignal(SIGABRT),
+        HasSubstr("Cannot add an option group to a cli using commands")
+    );
 }
 
 TEST(CLI, addGroupThenAddOption) {
@@ -80,14 +92,18 @@ TEST(CLI, addGroupThenAddOption) {
 TEST(CLI, addGroupThrowIfAddExisting) {
     yeschief::CLI cli("name", "description");
     cli.addGroup("My group").addOption("foo", "bar");
-    ASSERT_THROW(cli.addGroup("My group"), std::logic_error);
+    ASSERT_EXIT(cli.addGroup("My group"), KilledBySignal(SIGABRT), HasSubstr("Group already exists"));
 }
 
 TEST(CLI, addGroupThrowIfCommandAddedBefore) {
     yeschief::CLI cli("name", "description");
     CommandStub command("");
     cli.addCommand(&command);
-    ASSERT_THROW(cli.addGroup("My group"), std::logic_error);
+    ASSERT_EXIT(
+        cli.addGroup("My group"),
+        KilledBySignal(SIGABRT),
+        HasSubstr("Cannot add an option group to a cli using commands")
+    );
 }
 
 TEST(CLI, addCommand) {
@@ -100,7 +116,7 @@ TEST(CLI, addCommandThrowIfExisting) {
     yeschief::CLI cli("name", "description");
     CommandStub command("my-command");
     cli.addCommand(&command);
-    ASSERT_THROW(cli.addCommand(&command), std::logic_error);
+    ASSERT_EXIT(cli.addCommand(&command), KilledBySignal(SIGABRT), HasSubstr("Command already exists"));
 }
 
 TEST(CLI, addCommandMultiple) {
@@ -114,24 +130,34 @@ TEST(CLI, addCommandThrowIfOptionsAddedBefore) {
     yeschief::CLI cli("name", "description");
     cli.addOption("name", "My option");
     CommandStub command("my-command");
-    ASSERT_THROW(cli.addCommand(&command), std::logic_error);
+    ASSERT_EXIT(
+        cli.addCommand(&command), KilledBySignal(SIGABRT), HasSubstr("Cannot add a command to a cli using options")
+    );
 }
 
 TEST(CLI, parsePositionalThrowIfNonExisting) {
     yeschief::CLI cli("name", "description");
-    ASSERT_THROW(cli.parsePositional("hello"), std::logic_error);
+    ASSERT_EXIT(cli.parsePositional("hello"), KilledBySignal(SIGABRT), HasSubstr("Option doesn't exists"));
 }
 
 TEST(CLI, parsePositionalThrowIfRequiredAfterNonRequired) {
     yeschief::CLI cli("name", "description");
     cli.addOption("required", "This is required", {.required = true}).addOption("non-required", "This is not required");
-    ASSERT_THROW(cli.parsePositional("non-required", "required"), std::logic_error);
+    ASSERT_EXIT(
+        cli.parsePositional("non-required", "required"),
+        KilledBySignal(SIGABRT),
+        HasSubstr("Option is required but is placed after a non required one")
+    );
 }
 
 TEST(CLI, parsePositionalThrowIfOptionAfterListOne) {
     yeschief::CLI cli("name", "description");
     cli.addOption<std::vector<int>>("list", "This is a list").addOption("value", "This is not a list");
-    ASSERT_THROW(cli.parsePositional("list", "value"), std::logic_error);
+    ASSERT_EXIT(
+        cli.parsePositional("list", "value"),
+        KilledBySignal(SIGABRT),
+        HasSubstr("Cannot add a new positional argument after one with a list type")
+    );
 }
 
 TEST(CLI, parsePositional) {

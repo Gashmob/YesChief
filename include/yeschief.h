@@ -21,6 +21,7 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
+#pragma once
 #ifndef YESCHIEF_H
 #define YESCHIEF_H
 /**
@@ -30,7 +31,7 @@
  */
 
 #include <any>
-#include <cstdarg>
+#include <cassert>
 #include <expected>
 #include <iostream>
 #include <map>
@@ -39,6 +40,8 @@
 #include <regex>
 #include <string>
 #include <vector>
+
+#define assert_message(expr, message) assert((message, expr))
 
 namespace yeschief {
 class CLI;
@@ -451,17 +454,13 @@ auto yeschief::CLI::addOption(
     const std::string &group_name,
     const OptionConfiguration &configuration
 ) -> CLI & {
-    if (_mode.has_value() && _mode.value() == Mode::COMMANDS) {
-        throw std::logic_error("Cannot add an option group to a cli using commands");
-    }
+    assert_message(
+        ! _mode.has_value() || _mode.value() != Mode::COMMANDS, "Cannot add an option group to a cli using commands"
+    );
     _mode = Mode::OPTIONS;
 
-    if (_options.contains(name)) {
-        throw std::logic_error("CLI has already an option '" + name + "'");
-    }
-    if (! _groups.contains(group_name)) {
-        throw std::logic_error("Option group '" + group_name + "' does not exist");
-    }
+    assert_message(! _options.contains(name), "CLI has already this option");
+    assert_message(_groups.contains(group_name), "Option group does not exist");
 
     std::string long_name = name;
     std::string short_name;
@@ -470,9 +469,9 @@ auto yeschief::CLI::addOption(
         if (match.size() == 3) {
             long_name  = match[1].str();
             short_name = match[2].str();
-            if (short_name.length() != 1 || ! isalpha(short_name[0])) {
-                throw std::logic_error("Short name of an option can be only one letter, got '" + short_name + "'");
-            }
+            assert_message(
+                short_name.length() == 1 && isalpha(short_name[0]), "Short name of an option can be only one letter"
+            );
         }
     }
 
@@ -487,24 +486,21 @@ auto yeschief::CLI::addOption(
 
 template<typename... Tail>
 auto yeschief::CLI::parsePositional(const std::string &option_name, Tail &&...options) -> void {
-    if (! _options.contains(option_name)) {
-        throw std::logic_error("Option '" + option_name + "' doesn't exist");
-    }
+    assert_message(_options.contains(option_name), "Option doesn't exists");
     const auto option = _options.at(option_name);
     if (! _positional_options.empty()) {
         const auto last_option_name  = _positional_options[_positional_options.size() - 1];
         const auto last_option       = _options.at(last_option_name);
         const auto &last_option_type = last_option->type;
-        if (last_option_type == typeid(std::vector<int>) || last_option_type == typeid(std::vector<float>)
-            || last_option_type == typeid(std::vector<double>)) {
-            throw std::logic_error("Cannot add a new positional argument after one with a list type");
-        }
-        if (option->configuration.required && ! last_option->configuration.required) {
-            throw std::logic_error(
-                "Option '" + option_name + "' is required but is placed after a non required one '" + last_option_name
-                + "'"
-            );
-        }
+        assert_message(
+            last_option_type != typeid(std::vector<int>) && last_option_type != typeid(std::vector<float>)
+                && last_option_type != typeid(std::vector<double>),
+            "Cannot add a new positional argument after one with a list type"
+        );
+        assert_message(
+            ! option->configuration.required || last_option->configuration.required,
+            "Option is required but is placed after a non required one"
+        );
     }
 
     _positional_options.push_back(option_name);

@@ -37,28 +37,24 @@ CLI::CLI(std::string name, std::string description)
 }
 
 auto CLI::addGroup(const std::string &name) -> OptionGroup & {
-    if (_mode.has_value() && _mode.value() == Mode::COMMANDS) {
-        throw std::logic_error("Cannot add an option group to a cli using commands");
-    }
+    assert_message(
+        ! _mode.has_value() || _mode.value() != Mode::COMMANDS, "Cannot add an option group to a cli using commands"
+    );
     _mode = Mode::OPTIONS;
 
-    if (_groups.contains(name)) {
-        throw std::logic_error("Group '" + name + "' already exists");
-    }
+    assert_message(! _groups.contains(name), "Group already exists");
 
     return _groups.emplace(name, OptionGroup(this, name)).first->second;
 }
 
 auto CLI::addCommand(Command *command) -> CLI & {
-    if (_mode.has_value() && _mode.value() == Mode::OPTIONS) {
-        throw std::logic_error("Cannot add a command to a cli using options");
-    }
+    assert_message(
+        ! _mode.has_value() || _mode.value() != Mode::OPTIONS, "Cannot add a command to a cli using options"
+    );
     _mode = Mode::COMMANDS;
 
     const auto name = command->getName();
-    if (_commands.contains(name)) {
-        throw std::logic_error("Command '" + name + "' already exists");
-    }
+    assert_message(! _commands.contains(name), "Command already exists");
 
     CLI command_cli(name, command->getDescription());
     command->setup(command_cli);
@@ -427,10 +423,11 @@ auto CLI::buildOptionUsageHelp(const std::shared_ptr<const Option> &option) -> s
 }
 
 auto CLI::checkOptionType(const std::type_info &type) -> void {
-    if (type != typeid(bool) && type != typeid(std::string) && type != typeid(int) && type != typeid(float)
-        && type != typeid(double) && type != typeid(std::vector<bool>) && type != typeid(std::vector<std::string>)
-        && type != typeid(std::vector<int>) && type != typeid(std::vector<float>)
-        && type != typeid(std::vector<double>)) {
-        throw std::logic_error("Type '" + std::string(type.name()) + "' is not allowed for options");
-    }
+    assert_message(
+        type == typeid(bool) || type == typeid(std::string) || type == typeid(int) || type == typeid(float)
+            || type == typeid(double) || type == typeid(std::vector<bool>) || type == typeid(std::vector<std::string>)
+            || type == typeid(std::vector<int>) || type == typeid(std::vector<float>)
+            || type == typeid(std::vector<double>),
+        "Type is not allowed for options"
+    );
 }
