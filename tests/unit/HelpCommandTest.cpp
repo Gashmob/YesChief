@@ -36,17 +36,18 @@ TEST(HelpCommand, runWithEmptyResultsDisplayFullHelp) {
     ASSERT_EQ(0, help.run(yeschief::CLIResults({})));
     const auto output = internal::GetCapturedStdout();
     ASSERT_STREQ(
-        "usage:\n"
-        "\tname [COMMAND] [OPTIONS]\n"
-        "\n"
-        "description\n"
-        "\n"
-        "Commands:\n"
-        "\n"
-        "\thelp [OPTIONS] [COMMAND]\n"
-        "\t\tDisplay this help message\n"
-        "\t\tWhen COMMAND is given, display help for this command\n"
-        "\n",
+        R"(usage:
+  name [COMMAND] [OPTIONS]
+
+description
+
+Commands:
+
+  help [OPTIONS] [COMMAND]
+    Display this help message
+    When COMMAND is given, display help for this command
+
+)",
         output.c_str()
     );
 }
@@ -62,17 +63,18 @@ TEST(HelpCommand, runWithUnknownCommandDisplayFullHelp) {
     ASSERT_EQ(1, help.run(yeschief::CLIResults(option_values)));
     const auto output = internal::GetCapturedStdout();
     ASSERT_STREQ(
-        "usage:\n"
-        "\tname [COMMAND] [OPTIONS]\n"
-        "\n"
-        "description\n"
-        "\n"
-        "Commands:\n"
-        "\n"
-        "\thelp [OPTIONS] [COMMAND]\n"
-        "\t\tDisplay this help message\n"
-        "\t\tWhen COMMAND is given, display help for this command\n"
-        "\n",
+        R"(usage:
+  name [COMMAND] [OPTIONS]
+
+description
+
+Commands:
+
+  help [OPTIONS] [COMMAND]
+    Display this help message
+    When COMMAND is given, display help for this command
+
+)",
         output.c_str()
     );
 }
@@ -90,17 +92,18 @@ TEST(HelpCommand, runWithCommandDisplayCommandHelp) {
     ASSERT_EQ(0, help.run(yeschief::CLIResults(option_values)));
     const auto output = internal::GetCapturedStdout();
     ASSERT_STREQ(
-        "usage:\n"
-        "\tmy-command [OPTIONS]\n"
-        "\n"
-        "Stub class for Command.\n"
-        "Description on another line.\n"
-        "\n"
-        "Options:\n"
-        "\n"
-        "\t--exit VALUE\n"
-        "\t\tExit code of command\n"
-        "\n",
+        R"(usage:
+  my-command [OPTIONS]
+
+Stub class for Command.
+Description on another line.
+
+Options:
+
+  --exit VALUE
+    Exit code of command
+
+)",
         output.c_str()
     );
 }
