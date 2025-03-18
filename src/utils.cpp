@@ -55,7 +55,7 @@ auto yeschief::split(const std::string &str, const std::string &delimiter) -> st
 }
 
 auto yeschief::inArray(const std::vector<std::string> &array, const std::string &needle) -> bool {
-    return std::ranges::find(array, needle) != array.end();
+    return std::find(array.begin(), array.end(), needle) != array.end();
 }
 
 auto yeschief::parseArgv(const int argc, char **argv, const std::vector<std::string> &allowed_options)
