@@ -479,7 +479,7 @@ auto yeschief::CLI::addOption(
     const auto &type_info = typeid(T);
     checkOptionType(type_info);
     const auto option = std::make_shared<Option>(long_name, short_name, description, type_info, configuration);
-    _options.insert(std::make_pair(long_name, option));
+    _options.emplace(long_name, option);
     _groups.at(group_name).addOption(option);
 
     return *this;
