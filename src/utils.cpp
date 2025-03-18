@@ -95,7 +95,7 @@ auto yeschief::parseArgv(const int argc, char **argv, const std::vector<std::str
                     });
                 }
                 if (! raw_results.contains(option)) {
-                    raw_results.insert(std::make_pair(option, std::vector<std::string>()));
+                    raw_results.emplace(option, std::vector<std::string>());
                 }
 
                 std::string value = match[2];
@@ -130,7 +130,7 @@ auto yeschief::parseArgv(const int argc, char **argv, const std::vector<std::str
                 }
                 current_option = option;
                 if (! raw_results.contains(option)) {
-                    raw_results.insert(std::make_pair(option, std::vector<std::string>()));
+                    raw_results.emplace(option, std::vector<std::string>());
                 }
                 option_order.push_back(option);
             }
@@ -158,7 +158,7 @@ auto yeschief::parseArgv(const int argc, char **argv, const std::vector<std::str
                     }
                     current_option = option;
                     if (! raw_results.contains(option)) {
-                        raw_results.insert(std::make_pair(option, std::vector<std::string>()));
+                        raw_results.emplace(option, std::vector<std::string>());
                     }
                     option_order.push_back(option);
                 }

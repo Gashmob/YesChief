@@ -33,7 +33,7 @@ using namespace yeschief;
 
 CLI::CLI(std::string name, std::string description)
     : _name(std::move(name)), _description(std::move(description)), _mode(std::nullopt) {
-    _groups.insert(std::make_pair("", OptionGroup(this, "")));
+    _groups.emplace("", OptionGroup(this, ""));
 }
 
 auto CLI::addGroup(const std::string &name) -> OptionGroup & {
@@ -46,7 +46,7 @@ auto CLI::addGroup(const std::string &name) -> OptionGroup & {
         throw std::logic_error("Group '" + name + "' already exists");
     }
 
-    _groups.insert(std::make_pair(name, OptionGroup(this, name)));
+    _groups.emplace(name, OptionGroup(this, name));
     return _groups.at(name);
 }
 
@@ -64,8 +64,8 @@ auto CLI::addCommand(Command *command) -> CLI & {
     CLI command_cli(name, command->getDescription());
     command->setup(command_cli);
 
-    _commands.insert(std::make_pair(name, command));
-    _commands_cli.insert(std::make_pair(name, command_cli));
+    _commands.emplace(name, command);
+    _commands_cli.emplace(name, command_cli);
 
     return *this;
 }
@@ -121,7 +121,7 @@ auto CLI::run(const int argc, char **argv) const -> std::expected<CLIResults, Fa
           .type    = FaultType::UnrecognizedOption,
         });
     }
-    auto positional_index = 0;
+    size_t positional_index = 0;
     for (const auto &option_name : _positional_options) {
         if (positional_index == positional_arguments.size()) {
             break;
@@ -137,7 +137,7 @@ auto CLI::run(const int argc, char **argv) const -> std::expected<CLIResults, Fa
             if (! value.has_value()) {
                 return std::unexpected(value.error());
             }
-            option_values.insert(std::make_pair(option_name, value.value()));
+            option_values.emplace(option_name, value.value());
             break;
         }
 
@@ -145,7 +145,7 @@ auto CLI::run(const int argc, char **argv) const -> std::expected<CLIResults, Fa
         if (! value.has_value()) {
             return std::unexpected(value.error());
         }
-        option_values.insert(std::make_pair(option_name, value.value()));
+        option_values.emplace(option_name, value.value());
 
         positional_index++;
     }
@@ -168,7 +168,7 @@ auto CLI::run(const int argc, char **argv) const -> std::expected<CLIResults, Fa
             if (! value.has_value()) {
                 return std::unexpected(value.error());
             }
-            option_values.insert(std::make_pair(option->name, value.value()));
+            option_values.emplace(option->name, value.value());
         }
 
         else if (raw_results.contains(option->name)) {
@@ -177,7 +177,7 @@ auto CLI::run(const int argc, char **argv) const -> std::expected<CLIResults, Fa
             if (! value.has_value()) {
                 return std::unexpected(value.error());
             }
-            option_values.insert(std::make_pair(option->name, value.value()));
+            option_values.emplace(option->name, value.value());
         }
 
         else if (raw_results.contains(option->short_name)) {
@@ -186,11 +186,11 @@ auto CLI::run(const int argc, char **argv) const -> std::expected<CLIResults, Fa
             if (! value.has_value()) {
                 return std::unexpected(value.error());
             }
-            option_values.insert(std::make_pair(option->name, value.value()));
+            option_values.emplace(option->name, value.value());
         }
 
         else if (option->configuration.default_value.has_value()) {
-            option_values.insert(std::make_pair(option->name, option->configuration.default_value.value()));
+            option_values.emplace(option->name, option->configuration.default_value.value());
         }
 
         else if (option->configuration.required && ! option_values.contains(option->name)) {
@@ -331,7 +331,7 @@ auto CLI::help(std::ostream &out) const -> void {
             out << (name.empty() ? "Options" : name) << ":\n"
                 << "\n";
 
-            for (const auto option : group._options) {
+            for (const auto &option : group._options) {
                 out << "\t" << buildOptionUsageHelp(option) << "\n"
                     << "\t\t" << join(split(option->description, "\n"), "\n\t\t") << "\n"
                     << "\n";
