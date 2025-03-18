@@ -2,7 +2,20 @@
 
 ## v1.1.0
 
-*In development*
+*2025-03-18*
+
+### New Features 🎉
+* feat: Allow concatenation of short options by @Gashmob in https://github.com/Gashmob/YesChief/pull/44
+* feat: Replace throw by assert by @Gashmob in https://github.com/Gashmob/YesChief/pull/53
+* refactor: Use std::format by @Gashmob in https://github.com/Gashmob/YesChief/pull/54
+### Other changes
+* chore: Convert enums to enum class by @Gashmob in https://github.com/Gashmob/YesChief/pull/45
+* refactor: Option is now a structure by @Gashmob in https://github.com/Gashmob/YesChief/pull/46
+* refactor: Inline getters by @Gashmob in https://github.com/Gashmob/YesChief/pull/47
+* chore: Documentation workflow only on releases by @Gashmob in https://github.com/Gashmob/YesChief/pull/49
+* refactor: Replace all insert by emplace by @Gashmob in https://github.com/Gashmob/YesChief/pull/50
+* refactor: Use find instead of contains + at by @Gashmob in https://github.com/Gashmob/YesChief/pull/51
+* refactor: emplace + at -> emplace by @Gashmob in https://github.com/Gashmob/YesChief/pull/52
 
 ## v1.0.0
 
