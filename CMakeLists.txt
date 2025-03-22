@@ -49,7 +49,10 @@ message(DEBUG SRC_FILES=${SRC_FILES})
 
 add_library(yeschief ${SRC_FILES})
 
-target_include_directories(yeschief PUBLIC "${PROJECT_SOURCE_DIR}/include")
+target_include_directories(yeschief PUBLIC
+        $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+        $<INSTALL_INTERFACE:include>  # <prefix>/include
+)
 
 target_compile_definitions(yeschief
         PUBLIC LIB_VERSION="${LIB_VERSION}"
@@ -72,7 +75,6 @@ endif ()
 
 if (CMAKE_BUILD_TYPE STREQUAL "Release")
     message(DEBUG "Build install tree")
-    install(TARGETS yeschief)
     include(packaging)
     lib_package()
 endif ()

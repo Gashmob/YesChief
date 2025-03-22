@@ -21,6 +21,9 @@
 # SOFTWARE.
 include_guard()
 
+include(CMakePackageConfigHelpers)
+include(GNUInstallDirs)
+
 function(lib_package)
     set(CPACK_PACKAGE_NAME "YesChief")
     set(CPACK_PACKAGE_VENDOR "YesChief! developers")
@@ -38,6 +41,35 @@ function(lib_package)
     set(CPACK_RPM_PACKAGE_GROUP "Development/Tools")
     set(CPACK_RPM_PACKAGE_DESCRIPTION "YesChief!")
     set(CPACK_RPM_CHANGELOG_FILE "${CMAKE_CURRENT_BINARY_DIR}/changelog")
+
+    # CMake package
+    set(INCLUDE_INSTALL_DIR ${CMAKE_INSTALL_INCLUDEDIR}/yeschief CACHE PATH "Location of header files")
+    set(YESCHIEF_CMAKE_DIR "${CMAKE_INSTALL_LIBDIR}/cmake/yeschief" CACHE STRING "Installation directory for cmake files, relative to ${CMAKE_INSTALL_PREFIX}.")
+    set(version_config "${PROJECT_BINARY_DIR}/yeschief-config-version.cmake")
+    set(project_config "${PROJECT_BINARY_DIR}/yeschief-config.cmake")
+    set(targets_export_name yeschief-targets)
+    set(PACKAGE_TEMPLATE_DIR "${PROJECT_SOURCE_DIR}/cmake/package")
+    write_basic_package_version_file(
+            ${version_config}
+            VERSION ${VERSION}
+            COMPATIBILITY SameMajorVersion
+            ARCH_INDEPENDENT
+    )
+    configure_package_config_file(
+            "${PACKAGE_TEMPLATE_DIR}/yeschief-config.cmake.in"
+            ${project_config}
+            INSTALL_DESTINATION ${YESCHIEF_CMAKE_DIR}
+            PATH_VARS INCLUDE_INSTALL_DIR
+    )
+    export(TARGETS yeschief NAMESPACE yeschief::
+           FILE ${PROJECT_BINARY_DIR}/${targets_export_name}.cmake)
+
+    install(FILES ${project_config} ${version_config}
+            DESTINATION ${YESCHIEF_CMAKE_DIR})
+    install(EXPORT ${targets_export_name} DESTINATION ${YESCHIEF_CMAKE_DIR}
+            NAMESPACE yeschief::)
+    install(TARGETS yeschief EXPORT ${targets_export_name} DESTINATION ${CMAKE_INSTALL_LIBDIR})
+    install(FILES ${PROJECT_SOURCE_DIR}/include/yeschief.h DESTINATION ${INCLUDE_INSTALL_DIR})
 
     include(CPack)
 endfunction()
