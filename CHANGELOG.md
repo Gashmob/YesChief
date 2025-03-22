@@ -1,5 +1,14 @@
 # Changelog
 
+## v1.1.1
+
+*2025-03-22*
+
+### New Features 🎉
+* feat: Add cmake config file by @Gashmob in https://github.com/Gashmob/YesChief/pull/59
+### Dependencies updates 🧰
+* chore(deps): Bump actions/upload-artifact from 4.6.1 to 4.6.2 by @dependabot in https://github.com/Gashmob/YesChief/pull/57
+
 ## v1.1.0
 
 *2025-03-18*
