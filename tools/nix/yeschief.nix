@@ -1,11 +1,10 @@
-{ stdenvNoCC
+{ stdenv
 , fetchFromGitHub
 , cmake
 , ninja
-, llvmPackages_19
 }:
 
-stdenvNoCC.mkDerivation rec {
+stdenv.mkDerivation rec {
   pname = "yeschief";
   version = "1.1.0";
 
@@ -16,5 +15,5 @@ stdenvNoCC.mkDerivation rec {
     hash = "sha256-PRUpKIn6nGewY1MC0DLyHu/+FBK6cVtUcbjvRBLm4nM=";
   };
 
-  nativeBuildInputs = [ cmake ninja llvmPackages_19.libcxxClang ];
+  nativeBuildInputs = [ cmake ninja ];
 }
