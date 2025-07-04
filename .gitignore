@@ -4,3 +4,4 @@ out
 result
 node_modules
 coverage.info
+.direnv
