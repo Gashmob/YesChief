@@ -41,7 +41,7 @@ jobs:
       - name: Install Nix
         uses: cachix/install-nix-action@3715ab1a11cac9e991980d7b4a28d80c7ebdd8f9 # v28
       - name: Build
-        run: nix-shell --run 'build_deb_package'
+        run: nix develop --command build_deb_package
 
       - name: Archive package
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
@@ -69,7 +69,7 @@ jobs:
       - name: Install Nix
         uses: cachix/install-nix-action@3715ab1a11cac9e991980d7b4a28d80c7ebdd8f9 # v28
       - name: Build
-        run: nix-shell --run 'build_rpm_package'
+        run: nix develop --command build_rpm_package
 
       - name: Archive package
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
@@ -97,4 +97,4 @@ jobs:
       - name: Install Nix
         uses: cachix/install-nix-action@3715ab1a11cac9e991980d7b4a28d80c7ebdd8f9 # v28
       - name: Build
-        run: nix-build ${{ github.workspace }}/tools/nix -A yeschief
+        run: nix build .
