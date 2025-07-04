@@ -1,5 +1,17 @@
 # Changelog
 
+# v1.1.2
+
+*2025-07-04*
+
+### Dependencies updates 🧰
+* chore: Use nix flake instead of nix-shell by @Gashmob in https://github.com/Gashmob/YesChief/pull/63
+* chore(deps): Update cachix/install-nix-action action to v31 by @renovate in https://github.com/Gashmob/YesChief/pull/66
+* chore(deps): Update dependency ubuntu to v24 by @renovate in https://github.com/Gashmob/YesChief/pull/67
+### Other changes
+* chore: Nix package uses current dir by @Gashmob in https://github.com/Gashmob/YesChief/pull/61
+* chore: Configure Renovate by @renovate in https://github.com/Gashmob/YesChief/pull/64
+
 ## v1.1.1
 
 *2025-03-22*
