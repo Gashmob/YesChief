@@ -2,8 +2,7 @@
   description = "Yeschief! dev environment";
 
   inputs = {
-    nixpkgs.url =
-      "github:NixOS/nixpkgs/nixos-unstable";
+    nixpkgs.url = "github:NixOS/nixpkgs/25.05";
 
     # <https://github.com/nix-systems/nix-systems>
     systems.url = "github:nix-systems/default-linux";
