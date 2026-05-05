@@ -32,7 +32,7 @@ jobs:
           languages: ${{ matrix.language }}
 
       - name: Install Nix
-        uses: cachix/install-nix-action@0b0e072294b088b73964f1d72dfdac0951439dbd # v31.8.4
+        uses: cachix/install-nix-action@8aa03977d8d733052d78f4e008a241fd1dbf36b3 # v31.10.6
       - name: Build
         run: nix develop --command build_release
 
